@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2012 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -43,7 +43,7 @@
 		if ((cond) || (timeout_us && time_after(jiffies, timeout))) \
 			break; \
 		if (sleep_us) \
-			usleep_range(DIV_ROUND_UP(sleep_us, 4), sleep_us); \
+			usleep_range(1, sleep_us); \
 	} \
 	(cond) ? 0 : -ETIMEDOUT; \
 })

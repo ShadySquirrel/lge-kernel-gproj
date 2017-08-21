@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -38,6 +38,7 @@
 #include "rpm-notifier.h"
 
 /* Debug Definitions */
+
 
 enum {
 	MSM_RPM_LOG_REQUEST_PRETTY	= BIT(0),
@@ -987,7 +988,8 @@ static int __devinit msm_rpm_dev_probe(struct platform_device *pdev)
 	smd_disable_read_intr(msm_rpm_data.ch_info);
 
 	if (!standalone) {
-		msm_rpm_smd_wq = create_singlethread_workqueue("rpm-smd");
+		msm_rpm_smd_wq = alloc_workqueue("rpm-smd",
+				WQ_UNBOUND | WQ_MEM_RECLAIM | WQ_HIGHPRI, 1);
 		if (!msm_rpm_smd_wq)
 			return -EINVAL;
 	}

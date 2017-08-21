@@ -33,20 +33,20 @@ static struct msm_cpuidle_state msm_cstates[] = {
 	{0, 1, "C1", "RETENTION",
 		MSM_PM_SLEEP_MODE_RETENTION},
 
-	{0, 2, "C3", "POWER_COLLAPSE",
+	{0, 2, "C2", "STANDALONE_POWER_COLLAPSE",
+		MSM_PM_SLEEP_MODE_POWER_COLLAPSE_STANDALONE},
+
+	{0, 3, "C3", "POWER_COLLAPSE",
 		MSM_PM_SLEEP_MODE_POWER_COLLAPSE},
 
-	{0, 3, "C0", "WFI",
+	{1, 0, "C0", "WFI",
 		MSM_PM_SLEEP_MODE_WAIT_FOR_INTERRUPT},
 
-	{1, 0, "C1", "RETENTION",
+	{1, 1, "C1", "RETENTION",
 		MSM_PM_SLEEP_MODE_RETENTION},
 
-	{1, 1, "C0", "WFI",
-		MSM_PM_SLEEP_MODE_WAIT_FOR_INTERRUPT},
-
-	{1, 2, "C1", "RETENTION",
-		MSM_PM_SLEEP_MODE_RETENTION},
+	{1, 2, "C2", "STANDALONE_POWER_COLLAPSE",
+		MSM_PM_SLEEP_MODE_POWER_COLLAPSE_STANDALONE},
 
 	{2, 0, "C0", "WFI",
 		MSM_PM_SLEEP_MODE_WAIT_FOR_INTERRUPT},
@@ -54,34 +54,45 @@ static struct msm_cpuidle_state msm_cstates[] = {
 	{2, 1, "C1", "RETENTION",
 		MSM_PM_SLEEP_MODE_RETENTION},
 
+	{2, 2, "C2", "STANDALONE_POWER_COLLAPSE",
+		MSM_PM_SLEEP_MODE_POWER_COLLAPSE_STANDALONE},
+
+	{3, 0, "C0", "WFI",
+		MSM_PM_SLEEP_MODE_WAIT_FOR_INTERRUPT},
+
+	{3, 1, "C1", "RETENTION",
+		MSM_PM_SLEEP_MODE_RETENTION},
+
+	{3, 2, "C2", "STANDALONE_POWER_COLLAPSE",
+		MSM_PM_SLEEP_MODE_POWER_COLLAPSE_STANDALONE},
 };
 
 static int msm_cpuidle_enter(
 	struct cpuidle_device *dev, struct cpuidle_driver *drv, int index)
 {
 	int ret = 0;
-	int i = 0;
+	int i;
 	enum msm_pm_sleep_mode pm_mode;
-	struct cpuidle_state_usage *st_usage = NULL;
 
-	pm_mode = msm_pm_idle_prepare(dev, drv, index);
-	dev->last_residency = msm_pm_idle_enter(pm_mode);
+	pm_mode = msm_pm_idle_enter(dev, drv, index);
+
 	for (i = 0; i < dev->state_count; i++) {
-		st_usage = &dev->states_usage[i];
-		if ((enum msm_pm_sleep_mode) cpuidle_get_statedata(st_usage)
-		    == pm_mode) {
+		struct cpuidle_state_usage *st_usage = &dev->states_usage[i];
+		enum msm_pm_sleep_mode last_mode =
+			(enum msm_pm_sleep_mode)cpuidle_get_statedata(st_usage);
+
+		if (last_mode == pm_mode) {
 			ret = i;
 			break;
 		}
 	}
-
 
 	local_irq_enable();
 
 	return ret;
 }
 
-static void __init msm_cpuidle_set_states(void)
+static void __devinit msm_cpuidle_set_states(void)
 {
 	int i = 0;
 	int state_count = 0;
@@ -101,8 +112,8 @@ static void __init msm_cpuidle_set_states(void)
 			continue;
 
 		state = &msm_cpuidle_driver.states[state_count];
-		snprintf(state->name, CPUIDLE_NAME_LEN, cstate->name);
-		snprintf(state->desc, CPUIDLE_DESC_LEN, cstate->desc);
+		snprintf(state->name, CPUIDLE_NAME_LEN, "%s", cstate->name);
+		snprintf(state->desc, CPUIDLE_DESC_LEN, "%s", cstate->desc);
 		state->flags = 0;
 		state->exit_latency = 0;
 		state->power_usage = 0;
@@ -116,7 +127,7 @@ static void __init msm_cpuidle_set_states(void)
 	msm_cpuidle_driver.safe_state_index = 0;
 }
 
-static void __init msm_cpuidle_set_cpu_statedata(struct cpuidle_device *dev)
+static void __devinit msm_cpuidle_set_cpu_statedata(struct cpuidle_device *dev)
 {
 	int i = 0;
 	int state_count = 0;
@@ -137,7 +148,7 @@ static void __init msm_cpuidle_set_cpu_statedata(struct cpuidle_device *dev)
 	dev->state_count = state_count; /* Per cpu state count */
 }
 
-int __init msm_cpuidle_init(void)
+int __devinit msm_cpuidle_init(void)
 {
 	unsigned int cpu = 0;
 	int ret = 0;

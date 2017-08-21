@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -341,16 +341,12 @@ static int msm_gpio_irq_set_type(struct irq_data *d, unsigned int flow_type)
 		msm_gpio_update_dual_edge_pos(d, gpio);
 
 	mb();
-	
 	spin_unlock_irqrestore(&tlmm_lock, irq_flags);
 
-	// [SoundBSP][SR:01020638][CR:421325] BOTH EDGE  설정 오류.
-	if ((flow_type & IRQ_TYPE_EDGE_BOTH) != IRQ_TYPE_EDGE_BOTH)
-	{
+	if ((flow_type & IRQ_TYPE_EDGE_BOTH) != IRQ_TYPE_EDGE_BOTH) {
 		if (msm_gpio_irq_extn.irq_set_type)
 			msm_gpio_irq_extn.irq_set_type(d, flow_type);
 	}
-
 
 	return 0;
 }

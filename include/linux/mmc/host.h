@@ -18,7 +18,6 @@
 
 #include <linux/mmc/core.h>
 #include <linux/mmc/pm.h>
-#include <linux/err.h>
 
 struct mmc_ios {
 	unsigned int	clock;			/* clock rate */
@@ -44,9 +43,7 @@ struct mmc_ios {
 #define MMC_POWER_OFF		0
 #define MMC_POWER_UP		1
 #define MMC_POWER_ON		2
-#ifdef CONFIG_LGE_SD_LIFETIME_STRENGTHEN
-#define MMC_POWER_STAY_AT_RESUME		3
-#endif
+
 	unsigned char	bus_width;		/* data bus width */
 
 #define MMC_BUS_WIDTH_1		0
@@ -64,8 +61,6 @@ struct mmc_ios {
 #define MMC_TIMING_UHS_SDR104	4
 #define MMC_TIMING_UHS_DDR50	5
 #define MMC_TIMING_MMC_HS200	6
-
-	unsigned char	ddr;			/* dual data rate used */
 
 #define MMC_SDR_MODE		0
 #define MMC_1_2V_DDR_MODE	1
@@ -152,6 +147,8 @@ struct mmc_host_ops {
 	unsigned long (*get_max_frequency)(struct mmc_host *host);
 	unsigned long (*get_min_frequency)(struct mmc_host *host);
 	int     (*notify_load)(struct mmc_host *, enum mmc_load);
+	int	(*stop_request)(struct mmc_host *host);
+	unsigned int	(*get_xfer_remain)(struct mmc_host *host);
 };
 
 struct mmc_card;
@@ -160,11 +157,38 @@ struct device;
 struct mmc_async_req {
 	/* active mmc request */
 	struct mmc_request	*mrq;
+	unsigned int cmd_flags; /* copied from struct request */
+
 	/*
 	 * Check error status of completed mmc request.
 	 * Returns 0 if success otherwise non zero.
 	 */
 	int (*err_check) (struct mmc_card *, struct mmc_async_req *);
+	/* Reinserts request back to the block layer */
+	void (*reinsert_req) (struct mmc_async_req *);
+	/* update what part of request is not done (packed_fail_idx) */
+	int (*update_interrupted_req) (struct mmc_card *,
+			struct mmc_async_req *);
+};
+
+/**
+ * mmc_context_info - synchronization details for mmc context
+ * @is_done_rcv		wake up reason was done request
+ * @is_new_req		wake up reason was new request
+ * @is_waiting_last_req	is true, when 1 request running on the bus and
+ *			NULL fetched as second request. MMC_BLK_NEW_REQUEST
+ *			notification will wake up mmc thread from waiting.
+ * @is_urgent		wake up reason was urgent request
+ * @wait		wait queue
+ * @lock		lock to protect data fields
+ */
+struct mmc_context_info {
+	bool			is_done_rcv;
+	bool			is_new_req;
+	bool			is_waiting_last_req;
+	bool			is_urgent;
+	wait_queue_head_t	wait;
+	spinlock_t		lock;
 };
 
 struct mmc_hotplug {
@@ -265,6 +289,8 @@ struct mmc_host {
 #define MMC_CAP2_SANITIZE	(1 << 13)		/* Support Sanitize */
 #define MMC_CAP2_INIT_BKOPS	    (1 << 15)	/* Need to set BKOPS_EN */
 #define MMC_CAP2_CLK_SCALE	(1 << 16)	/* Allow dynamic clk scaling */
+#define MMC_CAP2_STOP_REQUEST	(1 << 18)	/* Allow stop ongoing request */
+
 	mmc_pm_flag_t		pm_caps;	/* supported pm features */
 
 	int			clk_requests;	/* internal reference counter */
@@ -339,6 +365,7 @@ struct mmc_host {
 	struct dentry		*debugfs_root;
 
 	struct mmc_async_req	*areq;		/* active async req */
+	struct mmc_context_info	context_info;	/* async synchronization info */
 
 #ifdef CONFIG_FAIL_MMC_REQUEST
 	struct fault_attr	fail_mmc_request;
@@ -366,7 +393,6 @@ struct mmc_host {
 	} perf;
 	bool perf_enable;
 #endif
-
 	struct mmc_ios saved_ios;
 	struct {
 		unsigned long	busy_time_us;
@@ -436,10 +462,7 @@ static inline void mmc_signal_sdio_irq(struct mmc_host *host)
 {
 	host->ops->enable_sdio_irq(host, 0);
 	host->sdio_irq_pending = true;
-
-	if(!atomic_read(&host->sdio_irq_thread_abort)
-		&& !IS_ERR_OR_NULL(host->sdio_irq_thread))
-		wake_up_process(host->sdio_irq_thread);
+	wake_up_process(host->sdio_irq_thread);
 }
 
 struct regulator;
@@ -467,9 +490,6 @@ int mmc_card_awake(struct mmc_host *host);
 int mmc_card_sleep(struct mmc_host *host);
 int mmc_card_can_sleep(struct mmc_host *host);
 
-int mmc_host_enable(struct mmc_host *host);
-int mmc_host_disable(struct mmc_host *host);
-int mmc_host_lazy_disable(struct mmc_host *host);
 int mmc_pm_notify(struct notifier_block *notify_block, unsigned long, void *);
 
 /* Module parameter */

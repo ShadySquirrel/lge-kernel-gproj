@@ -161,7 +161,8 @@ static inline int adb_lock(atomic_t *excl)
 
 static inline void adb_unlock(atomic_t *excl)
 {
-	atomic_dec(excl);
+	if (atomic_dec_return(excl) < 0)
+		atomic_inc(excl);
 }
 
 /* add a request to the tail of a list */
@@ -274,9 +275,7 @@ static ssize_t adb_read(struct file *fp, char __user *buf,
 	int r = count, xfer;
 	int ret;
 
-#ifndef CONFIG_USB_G_LGE_ANDROID
 	pr_debug("adb_read(%d)\n", count);
-#endif
 	if (!_adb_dev)
 		return -ENODEV;
 
@@ -305,7 +304,7 @@ static ssize_t adb_read(struct file *fp, char __user *buf,
 requeue_req:
 	/* queue a request */
 	req = dev->rx_req;
-	req->length = count;
+	req->length = ADB_BULK_BUFFER_SIZE;
 	dev->rx_done = 0;
 	ret = usb_ep_queue(dev->ep_out, req, GFP_ATOMIC);
 	if (ret < 0) {
@@ -314,13 +313,12 @@ requeue_req:
 		atomic_set(&dev->error, 1);
 		goto done;
 	} else {
-#ifndef CONFIG_USB_G_LGE_ANDROID
 		pr_debug("rx %p queue\n", req);
-#endif
 	}
 
 	/* wait for a request to complete */
-	ret = wait_event_interruptible(dev->read_wq, dev->rx_done);
+	ret = wait_event_interruptible(dev->read_wq, dev->rx_done ||
+				atomic_read(&dev->error));
 	if (ret < 0) {
 		if (ret != -ERESTARTSYS)
 		atomic_set(&dev->error, 1);
@@ -333,9 +331,7 @@ requeue_req:
 		if (req->actual == 0)
 			goto requeue_req;
 
-#ifndef CONFIG_USB_G_LGE_ANDROID
 		pr_debug("rx %p %d\n", req, req->actual);
-#endif
 		xfer = (req->actual < count) ? req->actual : count;
 		if (copy_to_user(buf, req->buf, xfer))
 			r = -EFAULT;
@@ -344,10 +340,11 @@ requeue_req:
 		r = -EIO;
 
 done:
+	if (atomic_read(&dev->error))
+		wake_up(&dev->write_wq);
+
 	adb_unlock(&dev->read_excl);
-#ifndef CONFIG_USB_G_LGE_ANDROID
 	pr_debug("adb_read returning %d\n", r);
-#endif
 	return r;
 }
 
@@ -361,9 +358,7 @@ static ssize_t adb_write(struct file *fp, const char __user *buf,
 
 	if (!_adb_dev)
 		return -ENODEV;
-#ifndef CONFIG_USB_G_LGE_ANDROID
 	pr_debug("adb_write(%d)\n", count);
-#endif
 
 	if (adb_lock(&dev->write_excl))
 		return -EBUSY;
@@ -416,16 +411,20 @@ static ssize_t adb_write(struct file *fp, const char __user *buf,
 	if (req)
 		adb_req_put(dev, &dev->tx_idle, req);
 
+	if (atomic_read(&dev->error))
+		wake_up(&dev->read_wq);
+
 	adb_unlock(&dev->write_excl);
-#ifndef CONFIG_USB_G_LGE_ANDROID
 	pr_debug("adb_write returning %d\n", r);
-#endif
 	return r;
 }
 
 static int adb_open(struct inode *ip, struct file *fp)
 {
-	printk(KERN_INFO "adb_open\n");
+	static DEFINE_RATELIMIT_STATE(rl, 10*HZ, 1);
+
+	if (__ratelimit(&rl))
+		pr_info("adb_open\n");
 	if (!_adb_dev)
 		return -ENODEV;
 
@@ -448,7 +447,10 @@ static int adb_open(struct inode *ip, struct file *fp)
 
 static int adb_release(struct inode *ip, struct file *fp)
 {
-	printk(KERN_INFO "adb_release\n");
+	static DEFINE_RATELIMIT_STATE(rl, 10*HZ, 1);
+
+	if (__ratelimit(&rl))
+		pr_info("adb_release\n");
 
 	/*
 	 * ADB daemon closes the device file after I/O error.  The

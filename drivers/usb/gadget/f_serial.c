@@ -29,7 +29,6 @@
  */
 #define GSERIAL_NO_PORTS 3
 
-
 struct f_gser {
 	struct gserial			port;
 	u8				data_id;
@@ -94,11 +93,7 @@ static inline struct f_gser *port_to_gser(struct gserial *p)
 	return container_of(p, struct f_gser, port);
 }
 #define GS_LOG2_NOTIFY_INTERVAL		5	/* 1 << 5 == 32 msec */
-#ifdef CONFIG_USB_G_LGE_ANDROID
-#define GS_NOTIFY_MAXPACKET     16
-#else
-#define GS_NOTIFY_MAXPACKET		10	/* notification + 2 bytes */
-#endif /* CONFIG_USB_G_LGE_ANDROID */
+#define GS_NOTIFY_MAXPACKET		16
 #endif
 /*-------------------------------------------------------------------------*/
 
@@ -956,9 +951,11 @@ int gser_bind_config(struct usb_configuration *c, u8 port_num)
 /**
  * gserial_init_port - bind a gserial_port to its transport
  */
-static int gserial_init_port(int port_num, const char *name)
+static int gserial_init_port(int port_num, const char *name,
+		const char *port_name)
 {
 	enum transport_type transport;
+	int ret = 0;
 
 	if (port_num >= GSERIAL_NO_PORTS)
 		return -ENODEV;
@@ -984,6 +981,9 @@ static int gserial_init_port(int port_num, const char *name)
 		no_smd_ports++;
 		break;
 	case USB_GADGET_XPORT_HSIC:
+		ghsic_ctrl_set_port_name(port_name, name);
+		ghsic_data_set_port_name(port_name, name);
+
 		/*client port number will be updated in gport_setup*/
 		no_hsic_sports++;
 		break;
@@ -999,5 +999,5 @@ static int gserial_init_port(int port_num, const char *name)
 
 	nr_ports++;
 
-	return 0;
+	return ret;
 }

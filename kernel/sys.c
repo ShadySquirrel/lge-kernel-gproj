@@ -189,10 +189,6 @@ SYSCALL_DEFINE3(setpriority, int, which, int, who, int, niceval)
 
 	if (which > PRIO_USER || which < PRIO_PROCESS)
 		goto out;
-	if (!ccs_capable(CCS_SYS_NICE)) {
-		error = -EPERM;
-		goto out;
-	}
 
 	/* normalize: avoid signed division (rounding problems) */
 	error = -ESRCH;
@@ -482,8 +478,6 @@ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
 			magic2 != LINUX_REBOOT_MAGIC2B &&
 	                magic2 != LINUX_REBOOT_MAGIC2C))
 		return -EINVAL;
-	if (!ccs_capable(CCS_SYS_REBOOT))
-		return -EPERM;
 
 	/*
 	 * If pid namespaces are enabled and the current task is in a child
@@ -1330,8 +1324,6 @@ SYSCALL_DEFINE2(sethostname, char __user *, name, int, len)
 
 	if (len < 0 || len > __NEW_UTS_LEN)
 		return -EINVAL;
-	if (!ccs_capable(CCS_SYS_SETHOSTNAME))
-		return -EPERM;
 	down_write(&uts_sem);
 	errno = -EFAULT;
 	if (!copy_from_user(tmp, name, len)) {
@@ -1382,8 +1374,6 @@ SYSCALL_DEFINE2(setdomainname, char __user *, name, int, len)
 		return -EPERM;
 	if (len < 0 || len > __NEW_UTS_LEN)
 		return -EINVAL;
-	if (!ccs_capable(CCS_SYS_SETHOSTNAME))
-		return -EPERM;
 
 	down_write(&uts_sem);
 	errno = -EFAULT;
@@ -1951,7 +1941,7 @@ static int prctl_set_vma_anon_name(unsigned long start, unsigned long end,
 			tmp = end;
 
 		/* Here vma->vm_start <= start < tmp <= (end|vma->vm_end). */
-		error = prctl_update_vma_anon_name(vma, &prev, start, end,
+		error = prctl_update_vma_anon_name(vma, &prev, start, tmp,
 				(const char __user *)arg);
 		if (error)
 			return error;
@@ -2171,11 +2161,11 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
 			error = prctl_set_vma(arg2, arg3, arg4, arg5);
 			break;
 		case PR_SET_TIMERSLACK_PID:
-			if (current->pid != (pid_t)arg3 &&
+			if (task_pid_vnr(current) != (pid_t)arg3 &&
 					!capable(CAP_SYS_NICE))
 				return -EPERM;
 			rcu_read_lock();
-			tsk = find_task_by_pid_ns((pid_t)arg3, &init_pid_ns);
+			tsk = find_task_by_vpid((pid_t)arg3);
 			if (tsk == NULL) {
 				rcu_read_unlock();
 				return -EINVAL;

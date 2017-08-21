@@ -141,12 +141,14 @@ obj-$(CONFIG_PM_DEVFREQ)	+= devfreq/
 #MobiCore
 obj-$(CONFIG_MOBICORE_SUPPORT)  += gud/
 
+obj-$(CONFIG_CORESIGHT)		+= coresight/
+
 #TDMB
 obj-$(CONFIG_LGE_BROADCAST_TDMB) += broadcast/
 
 #1Seg
 obj-$(CONFIG_LGE_BROADCAST_ONESEG) += broadcast/
 
-obj-$(CONFIG_MSM_QDSS)		+= coresight/
+
 #FeliCa
 obj-$(CONFIG_LGE_FELICA) 	+= felica/

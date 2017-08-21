@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2012, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -39,7 +39,7 @@
 #include "msm_watchdog.h"
 #include "devices.h"
 
-#define CHARM_MODEM_TIMEOUT	20000 //QCT 6000
+#define CHARM_MODEM_TIMEOUT	6000
 #define CHARM_HOLD_TIME		4000
 #define CHARM_MODEM_DELTA	100
 

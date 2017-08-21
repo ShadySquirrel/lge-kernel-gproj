@@ -664,7 +664,7 @@ static int fuse_readpages_fill(void *_data, struct page *page)
 		}
 	}
 
-#ifdef CONFIG_DMA_CMA
+#ifdef CONFIG_CMA
 	if (is_cma_pageblock(page)) {
 		struct page *oldpage = page, *newpage;
 		int err;
@@ -691,6 +691,8 @@ static int fuse_readpages_fill(void *_data, struct page *page)
 		 */
 		lock_page(newpage);
 		put_page(newpage);
+
+		lru_cache_add_file(newpage);
 
 		/* finally release the old page and swap pointers */
 		unlock_page(oldpage);
@@ -998,7 +1000,9 @@ static ssize_t fuse_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
 	if (err)
 		goto out;
 
-	file_update_time(file);
+	err = file_update_time(file);
+	if (err)
+		goto out;
 
 	if (file->f_flags & O_DIRECT) {
 		written = generic_file_direct_write(iocb, iov, &nr_segs,

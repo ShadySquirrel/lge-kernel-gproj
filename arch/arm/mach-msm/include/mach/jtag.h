@@ -13,7 +13,7 @@
 #ifndef __MACH_JTAG_H
 #define __MACH_JTAG_H
 
-#ifdef CONFIG_MSM_JTAG
+#if defined(CONFIG_MSM_JTAG) || defined(CONFIG_MSM_JTAG_MM)
 extern void msm_jtag_save_state(void);
 extern void msm_jtag_restore_state(void);
 #else

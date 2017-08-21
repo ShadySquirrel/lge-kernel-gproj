@@ -21,6 +21,9 @@ config ASHMEM
 	  POSIX SHM but with different behavior and sporting a simpler
 	  file-based API.
 
+	  It is, in theory, a good memory allocator for low-memory devices,
+	  because it can discard shared memory units when under memory pressure.
+
 config ANDROID_LOGGER
 	tristate "Android log driver"
 	default n
@@ -32,18 +35,11 @@ config ANDROID_PERSISTENT_RAM
 	select REED_SOLOMON_ENC8
 	select REED_SOLOMON_DEC8
 
-choice
-	prompt "Android RAM Console Type"
-	default ANDROID_RAM_CONSOLE
 config ANDROID_RAM_CONSOLE
 	bool "Android RAM buffer console"
 	depends on !S390 && !UML && HAVE_MEMBLOCK
 	select ANDROID_PERSISTENT_RAM
-config ANDROID_NEW_RAM_CONSOLE
-	bool "Android NEW RAM buffer console"
-	depends on !S390 && !UML && HAVE_MEMBLOCK
-	select ANDROID_PERSISTENT_RAM
-endchoice
+	default n
 
 config PERSISTENT_TRACER
 	bool "Persistent function tracer"

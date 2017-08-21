@@ -63,6 +63,7 @@ struct bt_security {
 #define BT_SECURITY_LOW		1
 #define BT_SECURITY_MEDIUM	2
 #define BT_SECURITY_HIGH	3
+#define BT_SECURITY_VERY_HIGH	4
 
 #define BT_DEFER_SETUP	7
 #define BT_FLUSHABLE	8
@@ -286,14 +287,10 @@ extern void bt_sysfs_cleanup(void);
 
 extern struct dentry *bt_debugfs;
 
-
 int l2cap_init(void);
 void l2cap_exit(void);
 
-
-
 int sco_init(void);
 void sco_exit(void);
-
 
 #endif /* __BLUETOOTH_H */

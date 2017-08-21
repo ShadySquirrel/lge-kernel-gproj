@@ -209,16 +209,8 @@ repeat:
 		if (!new_transaction)
 			goto alloc_transaction;
 		write_lock(&journal->j_state_lock);
-
-	        /* Wait on the journal's transaction barrier if necessary */
-		if (journal->j_barrier_count) {
-			write_unlock(&journal->j_state_lock);
-			wait_event(journal->j_wait_transaction_locked,
-				journal->j_barrier_count == 0);
-			goto repeat;
-		}
-
-		if (!journal->j_running_transaction) {
+		if (!journal->j_running_transaction &&
+		    !journal->j_barrier_count) {
 			jbd2_get_transaction(journal, new_transaction);
 			new_transaction = NULL;
 		}

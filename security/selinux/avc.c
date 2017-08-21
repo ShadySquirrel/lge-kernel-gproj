@@ -832,7 +832,7 @@ inline int avc_audit(u32 ssid, u32 tsid,
 		 * permission was READ and the auditdeny checks were for
 		 * ACCESS
 		 */
-		if (a && a->selinux_audit_data &&
+		if (a &&
 		    a->selinux_audit_data->auditdeny &&
 		    !(a->selinux_audit_data->auditdeny & avd->auditdeny))
 			audited = 0;

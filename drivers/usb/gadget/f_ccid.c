@@ -1,7 +1,7 @@
 /*
  * f_ccid.c -- CCID function Driver
  *
- * Copyright (c) 2011, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2011, The Linux Foundation. All rights reserved.
 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -16,7 +16,6 @@
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
-#include <linux/usb/android_composite.h>
 #include <linux/fs.h>
 #include <linux/usb/ccid_desc.h>
 #include <linux/miscdevice.h>
@@ -26,7 +25,7 @@
 #define BULK_IN_BUFFER_SIZE sizeof(struct ccid_bulk_in_header)
 #define BULK_OUT_BUFFER_SIZE sizeof(struct ccid_bulk_out_header)
 #define CTRL_BUF_SIZE	4
-#define FUNCTION_NAME_CCID	"ccid"
+#define FUNCTION_NAME	"ccid"
 #define CCID_NOTIFY_INTERVAL	5
 #define CCID_NOTIFY_MAXPACKET	4
 
@@ -944,7 +943,7 @@ static int ccid_bind_config(struct usb_configuration *c)
 
 	pr_debug("ccid_bind_config\n");
 	ccid_dev->cdev = c->cdev;
-	ccid_dev->function.name = FUNCTION_NAME_CCID;
+	ccid_dev->function.name = FUNCTION_NAME;
 	ccid_dev->function.descriptors = ccid_fs_descs;
 	ccid_dev->function.hs_descriptors = ccid_hs_descs;
 	ccid_dev->function.bind = ccid_function_bind;

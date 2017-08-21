@@ -73,7 +73,7 @@ struct event_timer_info *add_event_timer(void (*function)(void *), void *data)
 	event_info->data = data;
 	/* Init rb node and hr timer */
 	timerqueue_init(&event_info->node);
-	pr_info("%s: New Event Added. Event 0x%x.",
+	pr_debug("%s: New Event Added. Event 0x%x.",
 	__func__,
 	(unsigned int)event_info);
 

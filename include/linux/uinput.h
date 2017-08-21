@@ -172,13 +172,5 @@ struct uinput_user_dev {
 	int absfuzz[ABS_CNT];
 	int absflat[ABS_CNT];
 };
-
-struct uinput_event {
-	struct timeval time;
-	uint16_t type;
-	uint16_t code;
-	int32_t value;
-};
-
 #endif	/* __UINPUT_H_ */
 

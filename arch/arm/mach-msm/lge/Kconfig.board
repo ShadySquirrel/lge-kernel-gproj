@@ -14,5 +14,8 @@ source "arch/arm/mach-msm/lge/gv/Kconfig"
 # GV KR
 source "arch/arm/mach-msm/lge/gvkr/Kconfig"
 
+# MAKO
+source "arch/arm/mach-msm/lge/mako/Kconfig"
+
 config MACH_LGE_DUMMY
 	bool "NONE (No device)"

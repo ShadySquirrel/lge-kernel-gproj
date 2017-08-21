@@ -25,27 +25,6 @@
 #include <linux/hw_breakpoint.h>
 #include <linux/cn_proc.h>
 
-#ifdef CONFIG_CCSECURITY
-static inline bool anti_ptrace_uid(const struct task_struct *task,
-				   const char *funcname)
-{
-	if (!ccsecurity_ops.disabled) {
-		const uid_t uid = task_uid(task);
-		switch (uid) {
-		case 4505:
-		case 4510:
-			return true;
-		}
-	}
-	return false;
-}
-#else
-static inline bool anti_ptrace_uid(const struct task_struct *task,
-				   const char *funcname)
-{
-	return false;
-}
-#endif
 
 static int ptrace_trapping_sleep_fn(void *flags)
 {
@@ -254,7 +233,7 @@ int __ptrace_may_access(struct task_struct *task, unsigned int mode)
 	 */
 	int dumpable = 0;
 	/* Don't let security modules deny introspection */
-	if (task == current)
+	if (same_thread_group(task, current))
 		return 0;
 	rcu_read_lock();
 	tcred = __task_cred(task);
@@ -920,11 +899,6 @@ SYSCALL_DEFINE4(ptrace, long, request, long, pid, unsigned long, addr,
 {
 	struct task_struct *child;
 	long ret;
-	{
-		const int rc = ccs_ptrace_permission(request, pid);
-		if (rc)
-			return rc;
-	}
 
 	if (request == PTRACE_TRACEME) {
 		ret = ptrace_traceme();
@@ -939,11 +913,6 @@ SYSCALL_DEFINE4(ptrace, long, request, long, pid, unsigned long, addr,
 		goto out;
 	}
 
-	if ((request != PTRACE_DETACH) && anti_ptrace_uid(child, __func__)) {
-		ret = -EPERM;
-		goto out_put_task_struct;
-	}
-	
 	if (request == PTRACE_ATTACH || request == PTRACE_SEIZE) {
 		ret = ptrace_attach(child, request, addr, data);
 		/*
@@ -1077,11 +1046,6 @@ asmlinkage long compat_sys_ptrace(compat_long_t request, compat_long_t pid,
 {
 	struct task_struct *child;
 	long ret;
-	{
-		const int rc = ccs_ptrace_permission(request, pid);
-		if (rc)
-			return rc;
-	}
 
 	if (request == PTRACE_TRACEME) {
 		ret = ptrace_traceme();
@@ -1094,11 +1058,6 @@ asmlinkage long compat_sys_ptrace(compat_long_t request, compat_long_t pid,
 		goto out;
 	}
 
-	if ((request != PTRACE_DETACH) && anti_ptrace_uid(child, __func__)) {
-		ret = -EPERM;
-		goto out_put_task_struct;
-	}
-	
 	if (request == PTRACE_ATTACH || request == PTRACE_SEIZE) {
 		ret = ptrace_attach(child, request, addr, data);
 		/*

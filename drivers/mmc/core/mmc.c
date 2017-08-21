@@ -23,10 +23,6 @@
 #include "mmc_ops.h"
 #include "sd_ops.h"
 
-// 1: block cmd5 at eMMC suspend, 0: using cmd5 at eMMC suspend.
-// do not need cmd5 at this time.
-#define BLOCK_EMMC_CMD5_SLEEP 1
-
 static const unsigned int tran_exp[] = {
 	10000,		100000,		1000000,	10000000,
 	0,		0,		0,		0
@@ -100,6 +96,7 @@ static int mmc_decode_cid(struct mmc_card *card)
 		card->cid.prod_name[3]	= UNSTUFF_BITS(resp, 72, 8);
 		card->cid.prod_name[4]	= UNSTUFF_BITS(resp, 64, 8);
 		card->cid.prod_name[5]	= UNSTUFF_BITS(resp, 56, 8);
+		card->cid.prv           = UNSTUFF_BITS(resp, 48, 8);
 		card->cid.serial	= UNSTUFF_BITS(resp, 16, 32);
 		card->cid.month		= UNSTUFF_BITS(resp, 12, 4);
 		card->cid.year		= UNSTUFF_BITS(resp, 8, 4) + 1997;
@@ -296,8 +293,8 @@ static int mmc_read_ext_csd(struct mmc_card *card, u8 *ext_csd)
 	}
 
 	card->ext_csd.rev = ext_csd[EXT_CSD_REV];
-	if (card->ext_csd.rev > 6) {
-		printk(KERN_ERR "%s: unrecognised EXT_CSD revision %d\n",
+	if (card->ext_csd.rev > 7) {
+		pr_err("%s: unrecognised EXT_CSD revision %d\n",
 			mmc_hostname(card->host), card->ext_csd.rev);
 		err = -EINVAL;
 		goto out;
@@ -636,6 +633,9 @@ MMC_DEV_ATTR(serial, "0x%08x\n", card->cid.serial);
 MMC_DEV_ATTR(enhanced_area_offset, "%llu\n",
 		card->ext_csd.enhanced_area_offset);
 MMC_DEV_ATTR(enhanced_area_size, "%u\n", card->ext_csd.enhanced_area_size);
+MMC_DEV_ATTR(sec_count, "0x%x\n", card->ext_csd.sectors);
+MMC_DEV_ATTR(prv, "0x%x\n", card->cid.prv);
+MMC_DEV_ATTR(rev, "0x%x\n", card->ext_csd.rev);
 
 static struct attribute *mmc_std_attrs[] = {
 	&dev_attr_cid.attr,
@@ -651,6 +651,9 @@ static struct attribute *mmc_std_attrs[] = {
 	&dev_attr_serial.attr,
 	&dev_attr_enhanced_area_offset.attr,
 	&dev_attr_enhanced_area_size.attr,
+	&dev_attr_sec_count.attr,
+	&dev_attr_prv.attr,
+	&dev_attr_rev.attr,
 	NULL,
 };
 
@@ -1346,25 +1349,27 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 		}
 	}
 
-	if ((host->caps2 & MMC_CAP2_PACKED_WR &&
-			card->ext_csd.max_packed_writes > 0) ||
-	    (host->caps2 & MMC_CAP2_PACKED_RD &&
-			card->ext_csd.max_packed_reads > 0)) {
-		err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
-				EXT_CSD_EXP_EVENTS_CTRL,
-				EXT_CSD_PACKED_EVENT_EN,
-				card->ext_csd.generic_cmd6_time);
-		if (err && err != -EBADMSG)
-			goto free_card;
-		if (err) {
-			pr_warning("%s: Enabling packed event failed\n",
-					mmc_hostname(card->host));
-			card->ext_csd.packed_event_en = 0;
-			err = 0;
-		} else {
-			card->ext_csd.packed_event_en = 1;
-		}
+	if(card->cid.manfid != 0x90){
+		if ((host->caps2 & MMC_CAP2_PACKED_WR &&
+				card->ext_csd.max_packed_writes > 0) ||
+		(host->caps2 & MMC_CAP2_PACKED_RD &&
+				card->ext_csd.max_packed_reads > 0)) {
+			err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+					EXT_CSD_EXP_EVENTS_CTRL,
+					EXT_CSD_PACKED_EVENT_EN,
+					card->ext_csd.generic_cmd6_time);
+			if (err && err != -EBADMSG)
+				goto free_card;
+			if (err) {
+				pr_warning("%s: Enabling packed event failed\n",
+						mmc_hostname(card->host));
+				card->ext_csd.packed_event_en = 0;
+				err = 0;
+			} else {
+				card->ext_csd.packed_event_en = 1;
+			}
 
+		}
 	}
 
 	if (!oldcard) {
@@ -1386,25 +1391,19 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 		if (card->ext_csd.bkops_en) {
 			INIT_DELAYED_WORK(&card->bkops_info.dw,
 					  mmc_start_idle_time_bkops);
-			INIT_WORK(&card->bkops_info.poll_for_completion,
-				  mmc_bkops_completion_polling);
 
 			/*
 			 * Calculate the time to start the BKOPs checking.
-			 * The idle time of the host controller should be taken
-			 * into account in order to prevent a race condition
-			 * before starting BKOPs and going into suspend.
-			 * If the host controller didn't set its idle time,
+			 * The host controller can set this time in order to
+			 * prevent a race condition before starting BKOPs
+			 * and going into suspend.
+			 * If the host controller didn't set this time,
 			 * a default value is used.
 			 */
 			card->bkops_info.delay_ms = MMC_IDLE_BKOPS_TIME_MS;
-			if (card->bkops_info.host_suspend_tout_ms)
-				card->bkops_info.delay_ms = min(
-					card->bkops_info.delay_ms,
-				      card->bkops_info.host_suspend_tout_ms/2);
-
-			card->bkops_info.min_sectors_to_queue_delayed_work =
-				BKOPS_MIN_SECTORS_TO_QUEUE_DELAYED_WORK;
+			if (card->bkops_info.host_delay_ms)
+				card->bkops_info.delay_ms =
+					card->bkops_info.host_delay_ms;
 		}
 	}
 
@@ -1522,20 +1521,21 @@ static int mmc_suspend(struct mmc_host *host)
 	mmc_disable_clk_scaling(host);
 
 	mmc_claim_host(host);
-	if (mmc_can_poweroff_notify(host->card))
+
+	err = mmc_cache_ctrl(host, 0);
+	if (err)
+		goto out;
+
+	if (mmc_can_poweroff_notify(host->card) && host->card->cid.manfid != 0x90)
 		err = mmc_poweroff_notify(host->card, EXT_CSD_POWER_OFF_SHORT);
-#if BLOCK_EMMC_CMD5_SLEEP
-        else if (!mmc_host_is_spi(host))
-                mmc_deselect_cards(host);
-#else
-	else if (mmc_card_can_sleep(host))
+	else if (mmc_card_can_sleep(host) && host->card->cid.manfid != 0x90)
 		err = mmc_card_sleep(host);
 	else if (!mmc_host_is_spi(host))
 		mmc_deselect_cards(host);
-#endif
 	host->card->state &= ~(MMC_STATE_HIGHSPEED | MMC_STATE_HIGHSPEED_200);
-	mmc_release_host(host);
 
+out:
+	mmc_release_host(host);
 	return err;
 }
 

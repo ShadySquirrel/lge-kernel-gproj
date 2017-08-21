@@ -573,6 +573,40 @@ static const struct pm8xxx_adc_map_pt adcmap_ntcg_104ef_104fb[] = {
 	{419,		128000}
 };
 
+static struct pm8xxx_adc_map adcmap_btm_threshold = {
+	.pt = def_adcmap_btm_threshold,
+	.size = ARRAY_SIZE(def_adcmap_btm_threshold),
+};
+static struct pm8xxx_adc_map adcmap_pa_therm = {
+	.pt = def_adcmap_pa_therm,
+	.size = ARRAY_SIZE(def_adcmap_pa_therm),
+};
+static struct pm8xxx_adc_map adcmap_ntcg_104ef_104fb = {
+	.pt = def_adcmap_ntcg_104ef_104fb,
+	.size = ARRAY_SIZE(def_adcmap_ntcg_104ef_104fb),
+};
+
+void pm8xxx_set_adcmap_btm_threshold(void *pts, int size)
+{
+	adcmap_btm_threshold.pt = pts;
+	adcmap_btm_threshold.size = size;
+}
+EXPORT_SYMBOL(pm8xxx_set_adcmap_btm_threshold);
+
+void pm8xxx_set_adcmap_pa_therm(void *pts, int size)
+{
+	adcmap_pa_therm.pt = pts;
+	adcmap_pa_therm.size = size;
+}
+EXPORT_SYMBOL(pm8xxx_set_adcmap_pa_therm);
+
+void pm8xxx_set_adcmap_ntcg_104ef_104fb(void *pts, int size)
+{
+	adcmap_ntcg_104ef_104fb.pt = pts;
+	adcmap_ntcg_104ef_104fb.size = size;
+}
+EXPORT_SYMBOL(pm8xxx_set_adcmap_ntcg_104ef_104fb);
+
 static int32_t pm8xxx_adc_map_linear(const struct pm8xxx_adc_map_pt *pts,
 		uint32_t tablesize, int32_t input, int64_t *output)
 {

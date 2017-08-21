@@ -27,6 +27,7 @@ obj-$(CONFIG_RMI4_I2C)          += rmi4/
 obj-$(CONFIG_INPUT_APMPOWER)	+= apm-power.o
 obj-$(CONFIG_INPUT_OF_MATRIX_KEYMAP) += of_keymap.o
 obj-$(CONFIG_INPUT_KEYRESET)	+= keyreset.o
+obj-$(CONFIG_INPUT_LID)		+= lid.o
 
 #BEGIN: 0019636 chanha.park@lge.com 2012-06-11
 #ADD: 0019636: [F200][BT] BTL-A Porting 

@@ -1,7 +1,7 @@
 /* arch/arm/mach-msm/smd_rpcrouter.c
  *
  * Copyright (C) 2007 Google, Inc.
- * Copyright (c) 2007-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2007-2011, The Linux Foundation. All rights reserved.
  * Author: San Mehat <san@android.com>
  *
  * This software is licensed under the terms of the GNU General Public
@@ -2127,7 +2127,7 @@ int msm_rpc_get_curr_pkt_size(struct msm_rpc_endpoint *ept)
 int msm_rpcrouter_close(void)
 {
 	struct rpcrouter_xprt_info *xprt_info;
-	union rr_control_msg ctl;
+	union rr_control_msg ctl = { 0 };
 
 	ctl.cmd = RPCROUTER_CTRL_CMD_BYE;
 	mutex_lock(&xprt_info_list_lock);
