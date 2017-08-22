@@ -23,8 +23,7 @@ extern int g_kcal_b;
 
 static int set_qlut_kcal_values(int kcal_r, int kcal_g, int kcal_b)
 {
-#if 0 // WTF? Why?
-//#if defined (CONFIG_MACH_APQ8064_GKU) || defined (CONFIG_MACH_APQ8064_GKKT) || defined (CONFIG_MACH_APQ8064_GKSK) || defined (CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GKGLOBAL)
+#if defined (CONFIG_MACH_APQ8064_GKU) || defined (CONFIG_MACH_APQ8064_GKKT) || defined (CONFIG_MACH_APQ8064_GKSK) || defined (CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GKGLOBAL) || defined(CONFIG_MACH_APQ8064_OMEGAR) || defined(CONFIG_MACH_APQ8064_OMEGA) || defined (CONFIG_MACH_APQ8064_GVKT)
 	g_kcal_r = kcal_r < 248 ? 248 : kcal_r;
 	g_kcal_g = kcal_g < 248 ? 248 : kcal_g;
 	g_kcal_b = kcal_b < 253 ? 253 : kcal_b;

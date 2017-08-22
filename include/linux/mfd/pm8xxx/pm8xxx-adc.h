@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -311,7 +311,7 @@ struct pm8xxx_adc_chan_result {
 	int64_t		measurement;
 	int64_t		physical;
 #ifdef CONFIG_LGE_CHARGER_TEMP_SCENARIO
-/* battery of therm H/W register level reading kwangjae1.lee@lge.com */
+/*                                                                   */
 	int64_t		adc_value;
 #endif
 };

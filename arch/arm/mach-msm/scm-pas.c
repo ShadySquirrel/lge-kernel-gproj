@@ -28,7 +28,6 @@
 #define PAS_SHUTDOWN_CMD	6
 #define PAS_IS_SUPPORTED_CMD	7
 
-
 int pas_init_image(enum pas_id id, const u8 *metadata, size_t size)
 {
 	int ret;
@@ -37,28 +36,18 @@ int pas_init_image(enum pas_id id, const u8 *metadata, size_t size)
 		u32	image_addr;
 	} request;
 	u32 scm_ret = 0;
-	void *mdata_buf;
-	dma_addr_t mdata_phys;
-	DEFINE_DMA_ATTRS(attrs);
+	/* Make memory physically contiguous */
+	void *mdata_buf = kmemdup(metadata, size, GFP_KERNEL);
 
-	dma_set_attr(DMA_ATTR_STRONGLY_ORDERED, &attrs);
-	mdata_buf = dma_alloc_attrs(NULL, size, &mdata_phys, GFP_KERNEL,
-	                                      &attrs);
-
-	if (!mdata_buf) {
-	        pr_err("Allocation for metadata failed.\n");
+	if (!mdata_buf)
 		return -ENOMEM;
-        }
-
-        memcpy(mdata_buf, metadata, size);
 
 	request.proc = id;
-	request.image_addr = mdata_phys;
+	request.image_addr = virt_to_phys(mdata_buf);
 
 	ret = scm_call(SCM_SVC_PIL, PAS_INIT_IMAGE_CMD, &request,
 			sizeof(request), &scm_ret, sizeof(scm_ret));
-
-        dma_free_attrs(NULL, size, mdata_buf, mdata_phys, &attrs);
+	kfree(mdata_buf);
 
 	if (ret)
 		return ret;

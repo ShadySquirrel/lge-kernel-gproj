@@ -43,7 +43,7 @@
 
 
 #define PN544_DRV_NAME      "pn544"    
-#define NFC_GPIO_VEN	55       
+#define NFC_GPIO_VEN	62       
 #define NFC_GPIO_IRQ	29    
 #define NFC_GPIO_FIRM	37    
 #define NFC_I2C_SLAVE_ADDR 	0x28    
@@ -93,5 +93,5 @@ struct pn544_dev	{
 #define dprintk(fmt, args...) do{ } while(0)
 #endif
 
-#endif /* _PN544_LGE_H_ */
+#endif /*               */
 

@@ -24,6 +24,7 @@
 #include <linux/wakelock.h>
 #include <linux/platform_device.h>
 #include <linux/sched.h>
+#include <linux/pm_qos.h>
 
 #include <linux/tty.h>
 #include <linux/tty_driver.h>
@@ -37,7 +38,6 @@
 
 #define MAX_SMD_TTYS 37
 #define MAX_TTY_BUF_SIZE 2048
-
 
 static DEFINE_MUTEX(smd_tty_lock);
 
@@ -94,7 +94,7 @@ static struct smd_config smd_configs[] = {
 };
 #define DS_IDX 0
 #define LOOPBACK_IDX 36
-
+#define BT_ACL_IDX 2
 #define BT_CMD_IDX 3
 
 static struct delayed_work loopback_work;

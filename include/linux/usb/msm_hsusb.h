@@ -2,7 +2,7 @@
  *
  * Copyright (C) 2008 Google, Inc.
  * Author: Brian Swetland <swetland@google.com>
- * Copyright (c) 2009-2012, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2009-2012, The Linux Foundation. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -179,6 +179,8 @@ enum usb_vdd_value {
  *              for msm_otg driver.
  * @phy_init_seq: PHY configuration sequence. val, reg pairs
  *              terminated by -1.
+ * @phy_init_seq: PHY configuration sequence for host mode. val, reg pairs
+ *              terminated by -1.
  * @vbus_power: VBUS power on/off routine.It should return result
  *		as success(zero value) or failure(non-zero value).
  * @power_budget: VBUS power budget in mA (0 will be treated as 500mA).
@@ -192,9 +194,6 @@ enum usb_vdd_value {
  * @mhl_enable: indicates MHL connector or not.
  * @disable_reset_on_disconnect: perform USB PHY and LINK reset
  *              on USB cable disconnection.
- * @enable_dcd: Enable Data Contact Detection circuit. if not set
- *              wait for 600msec before proceeding to primary
- *              detection.
  * @enable_lpm_on_suspend: Enable the USB core to go into Low
  *              Power Mode, when USB bus is suspended but cable
  *              is connected.
@@ -205,7 +204,8 @@ enum usb_vdd_value {
  */
 struct msm_otg_platform_data {
 	int *phy_init_seq;
-	bool (*vbus_power)(bool on);
+	int *phy_init_host_seq;
+	int (*vbus_power)(bool on);
 	unsigned power_budget;
 	enum usb_mode_type mode;
 	enum otg_control_type otg_control;
@@ -216,7 +216,6 @@ struct msm_otg_platform_data {
 	unsigned int mpm_otgsessvld_int;
 	bool mhl_enable;
 	bool disable_reset_on_disconnect;
-	bool enable_dcd;
 	bool enable_lpm_on_dev_suspend;
 	bool core_clk_always_on_workaround;
 	struct msm_bus_scale_pdata *bus_scale_table;
@@ -232,11 +231,7 @@ struct msm_otg_platform_data {
  * This option is set for embedded hosts or OTG devices in which leakage
  * currents are very minimal.
  */
-#ifdef CONFIG_USB_OTG
-#define TA_WAIT_BCON	30000	/* (1100 - 30000) */
-#else
 #define TA_WAIT_BCON	-1
-#endif
 
 #define TA_AIDL_BDIS	500	/* (200 - ) */
 #define TA_BIDL_ADIS	155	/* (155 - 200) */
@@ -332,13 +327,14 @@ struct msm_otg {
 	unsigned cur_power;
 	struct delayed_work chg_work;
 	struct delayed_work pmic_id_status_work;
+	struct delayed_work check_ta_work;
 #if defined(CONFIG_USB_G_LGE_ANDROID) && defined(CONFIG_USB_OTG)
-	struct delayed_work pmic_id_work;
+    struct delayed_work pmic_id_work;
     struct delayed_work usb_id_sel_work;
 #endif
 	enum usb_chg_state chg_state;
 	enum usb_chg_type chg_type;
-	u8 dcd_retries;
+	unsigned dcd_time;
 	struct wake_lock wlock;
 	struct notifier_block usbdev_nb;
 	unsigned mA_port;
@@ -350,7 +346,7 @@ struct msm_otg {
 	/*
 	 * Allowing PHY power collpase turns off the HSUSB 3.3v and 1.8v
 	 * analog regulators while going to low power mode.
-	 * Currently only 8960(28nm PHY) has the support to allowing PHY
+	 * Currently only 28nm PHY has the support to allowing PHY
 	 * power collapse since it doesn't have leakage currents while
 	 * turning off the power rails.
 	 */
@@ -364,12 +360,18 @@ struct msm_otg {
 	   * Allow putting the core in Low Power mode, when
 	   * USB bus is suspended but cable is connected.
 	   */
-#define ALLOW_LPM_ON_DEV_SUSPEND	    BIT(2)
+#define ALLOW_LPM_ON_DEV_SUSPEND	BIT(2)
+	/*
+	 * Allowing PHY regulators LPM puts the HSUSB 3.3v and 1.8v
+	 * analog regulators into LPM while going to USB low power mode.
+	 */
+#define ALLOW_PHY_REGULATORS_LPM	BIT(3)
 	unsigned long lpm_flags;
 #define PHY_PWR_COLLAPSED		BIT(0)
 #define PHY_RETENTIONED			BIT(1)
 #define XO_SHUTDOWN			BIT(2)
 #define CLOCKS_DOWN			BIT(3)
+#define PHY_REGULATORS_LPM	BIT(4)
 	int reset_counter;
 	unsigned long b_last_se0_sess;
 	unsigned long tmouts;
@@ -383,12 +385,7 @@ struct msm_hsic_host_platform_data {
 	unsigned data;
 	struct msm_bus_scale_pdata *bus_scale_table;
 	unsigned log2_irq_thresh;
-
-	/*swfi latency is required while driving resume on to the bus */
 	u32 swfi_latency;
-
-	/*standalone latency is required when HSCI is active*/
-	u32 standalone_latency;
 };
 
 struct msm_usb_host_platform_data {
@@ -407,12 +404,6 @@ struct msm_hsic_peripheral_platform_data {
 	bool core_clk_always_on_workaround;
 };
 
-enum usb_pipe_mem_type {
-	SPS_PIPE_MEM = 0,	/* Default, SPS dedicated pipe memory */
-	USB_PRIVATE_MEM,	/* USB's private memory */
-	SYSTEM_MEM,		/* System RAM, requires allocation */
-};
-
 /**
  * struct usb_bam_pipe_connect: pipe connection information
  * between USB/HSIC BAM and another BAM. USB/HSIC BAM can be
@@ -421,7 +412,6 @@ enum usb_pipe_mem_type {
  * @src_pipe_index: src bam pipe index.
  * @dst_phy_addr: dst bam physical address.
  * @dst_pipe_index: dst bam pipe index.
- * @mem_type: type of memory used for BAM FIFOs
  * @data_fifo_base_offset: data fifo offset.
  * @data_fifo_size: data fifo size.
  * @desc_fifo_base_offset: descriptor fifo offset.
@@ -432,7 +422,6 @@ struct usb_bam_pipe_connect {
 	u32 src_pipe_index;
 	u32 dst_phy_addr;
 	u32 dst_pipe_index;
-	enum usb_pipe_mem_type mem_type;
 	u32 data_fifo_base_offset;
 	u32 data_fifo_size;
 	u32 desc_fifo_base_offset;
@@ -448,7 +437,6 @@ struct usb_bam_pipe_connect {
  * @usb_bam_num_pipes: max number of pipes to use.
  * @active_conn_num: number of active pipe connections.
  * @usb_base_address: BAM physical address.
- * @ignore_core_reset_ack: BAM can ignore ACK from USB core during PIPE RESET
  */
 struct msm_usb_bam_platform_data {
 	struct usb_bam_pipe_connect *connections;
@@ -456,14 +444,11 @@ struct msm_usb_bam_platform_data {
 	int usb_bam_num_pipes;
 	u32 total_bam_num;
 	u32 usb_base_address;
-	bool ignore_core_reset_ack;
 };
 
 enum usb_bam {
-	SSUSB_BAM = 0,
-	HSUSB_BAM,
+	HSUSB_BAM = 0,
 	HSIC_BAM,
-	MAX_BAMS,
 };
 
 #ifdef CONFIG_USB_DWC3_MSM

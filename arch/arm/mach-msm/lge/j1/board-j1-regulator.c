@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
  * Copyright (c) 2012, LGE Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,18 +37,16 @@ VREG_CONSUMERS(L2) = {
 	REGULATOR_SUPPLY("dsi_vdda",		"mipi_dsi.1"),
 #endif
 #if defined(CONFIG_MACH_LGE)
-/* LGE_CHANGE_S, Power setting for J1 Camera, 2012.03.16, soojung.lim@lge.com */
+/*                                                                            */
 	REGULATOR_SUPPLY("mipi_csi_vdd",	"msm_csid.0"),
 	REGULATOR_SUPPLY("mipi_csi_vdd",	"msm_csid.1"), 
-/* LGE_CHANGE_E, Power setting for J1 Camera, 2012.03.16, soojung.lim@lge.com */
+/*                                                                            */
 #else //Qualcomm original
 	REGULATOR_SUPPLY("mipi_csi_vdd",	"msm_csid.1"),
 	REGULATOR_SUPPLY("mipi_csi_vdd",	"msm_csid.2"),
 	REGULATOR_SUPPLY("lvds_pll_vdda",	"lvds.0"),
 	REGULATOR_SUPPLY("dsi1_pll_vdda",	"mipi_dsi.1"),
 #endif
-	REGULATOR_SUPPLY("HRD_VDDD_CDC_D",		"tabla2x-slim"),
-	REGULATOR_SUPPLY("HRD_CDC_VDDA_A_1P2V",	"tabla2x-slim"),
 	REGULATOR_SUPPLY("dsi_pll_vdda",	"mdp.0"),
 };
 VREG_CONSUMERS(L3) = {
@@ -77,6 +75,7 @@ VREG_CONSUMERS(L7) = {
 VREG_CONSUMERS(L8) = {
 	REGULATOR_SUPPLY("8921_l8",		NULL),
 	REGULATOR_SUPPLY("cam_vana",		"4-001a"),
+	REGULATOR_SUPPLY("cam_vana",		"4-0010"),
 	REGULATOR_SUPPLY("cam_vana",		"4-0048"),
 	REGULATOR_SUPPLY("cam_vana",		"4-006c"),
 	REGULATOR_SUPPLY("cam_vana",		"4-0034"),
@@ -107,6 +106,7 @@ VREG_CONSUMERS(L12) = {
 	REGULATOR_SUPPLY("cam2_vdig",		"4-006e"), /* GSBI4, Slave Addr: 0x6e, imx119 */
 #else //Qualcomm original
 	REGULATOR_SUPPLY("cam_vdig",		"4-001a"),
+	REGULATOR_SUPPLY("cam_vdig",		"4-0010"),
 	REGULATOR_SUPPLY("cam_vdig",		"4-0048"),
 	REGULATOR_SUPPLY("cam_vdig",		"4-006c"),
 	REGULATOR_SUPPLY("cam_vdig",		"4-0034"),
@@ -120,6 +120,7 @@ VREG_CONSUMERS(L13) = {
 };
 VREG_CONSUMERS(L14) = {
 	REGULATOR_SUPPLY("8921_l14",		NULL),
+	REGULATOR_SUPPLY("vreg_xoadc",		"pm8921-charger"),
 #if defined(CONFIG_MACH_LGE)
 	REGULATOR_SUPPLY("pa_therm",		"pm8xxx-adc"),
 #endif
@@ -131,6 +132,7 @@ VREG_CONSUMERS(L15) = {
 VREG_CONSUMERS(L16) = {
 	REGULATOR_SUPPLY("8921_l16",		NULL),
 	REGULATOR_SUPPLY("cam_vaf",		"4-001a"),
+	REGULATOR_SUPPLY("cam_vaf",		"4-0010"),
 	REGULATOR_SUPPLY("cam_vaf",		"4-0048"),
 	REGULATOR_SUPPLY("cam_vaf",		"4-006c"),
 	REGULATOR_SUPPLY("cam_vaf",		"4-0034"),
@@ -138,9 +140,9 @@ VREG_CONSUMERS(L16) = {
 };
 VREG_CONSUMERS(L17) = {
 	REGULATOR_SUPPLY("8921_l17",		NULL),
-// Start LGE_BSP_CAMERA::seongjo.kim@lge.com 2012-06-08 AF board setting for DCM_KDDI
+//                                                                                   
 #if defined(CONFIG_MACH_LGE) && (defined(CONFIG_IMX111) || (defined(CONFIG_IMX091)  && (defined(CONFIG_MACH_APQ8064_J1D) || defined(CONFIG_MACH_APQ8064_J1KD))))//yt.jeon 0420 adding defined
-// End LGE_BSP_CAMERA::seongjo.kim@lge.com 2012-06-08 AF board setting for DCM_KDDI
+//                                                                                 
 	REGULATOR_SUPPLY("cam1_vaf",	"4-000d"), /* GSBI4, Slave Addr: 0x0d, imx111 */
 #endif
 };
@@ -148,10 +150,10 @@ VREG_CONSUMERS(L18) = {
 	REGULATOR_SUPPLY("8921_l18",		NULL),
 };
 
-/* LGE_CHANGE_S, Power setting for 13M AF, 2012.04.20, yt.jeon@lge.com */
-// Start LGE_BSP_CAMERA::seongjo.kim@lge.com 2012-06-08 AF board setting for DCM_KDDI
+/*                                                                     */
+//                                                                                   
 #if defined(CONFIG_MACH_LGE) && defined(CONFIG_IMX091)  && !(defined(CONFIG_MACH_APQ8064_J1D) || defined(CONFIG_MACH_APQ8064_J1KD))
-// End LGE_BSP_CAMERA::seongjo.kim@lge.com 2012-06-08 AF board setting for DCM_KDDI
+//                                                                                 
 VREG_CONSUMERS(L21) = {
 	REGULATOR_SUPPLY("8921_l21",		NULL),
 	REGULATOR_SUPPLY("cam1_vaf",	"4-000d"), /* GSBI4, Slave Addr: 0x0d, imx091 */
@@ -161,7 +163,7 @@ VREG_CONSUMERS(L21) = {
 	REGULATOR_SUPPLY("8921_l21",		NULL),
 };
 #endif
-/* LGE_CHANGE_E, Power setting for 13M AF, 2012.04.20, yt.jeon@lge.com */
+/*                                                                     */
 
 VREG_CONSUMERS(L22) = {
 	REGULATOR_SUPPLY("8921_l22",		NULL),
@@ -187,8 +189,6 @@ VREG_CONSUMERS(L25) = {
 	REGULATOR_SUPPLY("CDC_VDDA_A_1P2V",	"tabla-slim"),
 	REGULATOR_SUPPLY("VDDD_CDC_D",		"tabla2x-slim"),
 	REGULATOR_SUPPLY("CDC_VDDA_A_1P2V",	"tabla2x-slim"),
-	REGULATOR_SUPPLY("VDDD_CDC_D",		"0-000d"),
-	REGULATOR_SUPPLY("CDC_VDDA_A_1P2V",	"0-000d"),
 };
 VREG_CONSUMERS(L26) = {
 	REGULATOR_SUPPLY("8921_l26",		NULL),
@@ -230,15 +230,12 @@ VREG_CONSUMERS(S4) = {
 	REGULATOR_SUPPLY("CDC_VDD_CP",		"tabla2x-slim"),
 	REGULATOR_SUPPLY("CDC_VDDA_TX",		"tabla2x-slim"),
 	REGULATOR_SUPPLY("CDC_VDDA_RX",		"tabla2x-slim"),
-	REGULATOR_SUPPLY("VDDIO_CDC",		"0-000d"),
-	REGULATOR_SUPPLY("CDC_VDD_CP",		"0-000d"),
-	REGULATOR_SUPPLY("CDC_VDDA_TX",		"0-000d"),
-	REGULATOR_SUPPLY("CDC_VDDA_RX",		"0-000d"),
 	REGULATOR_SUPPLY("riva_vddpx",		"wcnss_wlan.0"),
 	REGULATOR_SUPPLY("vcc_i2c",		"3-005b"),
 	REGULATOR_SUPPLY("vcc_i2c",		"3-0024"),
 	REGULATOR_SUPPLY("vddp",		"0-0048"),
 	REGULATOR_SUPPLY("hdmi_lvl_tsl",	"hdmi_msm.0"),
+	REGULATOR_SUPPLY("vdd-io",		"spi0.2"),
 };
 VREG_CONSUMERS(S5) = {
 	REGULATOR_SUPPLY("8921_s5",		NULL),
@@ -271,6 +268,7 @@ VREG_CONSUMERS(LVS5) = {
 	REGULATOR_SUPPLY("cam2_vio",	"4-006e"), /* GSBI4, Slave Addr: 0x6e, imx119 */
 #else //Qualcomm original
 	REGULATOR_SUPPLY("cam_vio",		"4-001a"),
+	REGULATOR_SUPPLY("cam_vio",		"4-0010"),
 	REGULATOR_SUPPLY("cam_vio",		"4-0048"),
 	REGULATOR_SUPPLY("cam_vio",		"4-006c"),
 	REGULATOR_SUPPLY("cam_vio",		"4-0034"),
@@ -317,7 +315,7 @@ VREG_CONSUMERS(EXT_MPP8) = {
 /*
 VREG_CONSUMERS(EXT_3P3V) = {
 	REGULATOR_SUPPLY("ext_3p3v",		NULL),
-	REGULATOR_SUPPLY("vdd_io",		"spi0.2"),
+	REGULATOR_SUPPLY("vdd-phy",		"spi0.2"),
 	REGULATOR_SUPPLY("mhl_ext_3p3v",	"msm_otg"),
 	REGULATOR_SUPPLY("lvds_vccs_3p3v",      "lvds.0"),
 	REGULATOR_SUPPLY("dsi1_vccs_3p3v",      "mipi_dsi.1"),
@@ -372,7 +370,6 @@ VREG_CONSUMERS(NCP) = {
 #ifdef CONFIG_USB_OTG
 VREG_CONSUMERS(EXT_5V) = {
 	REGULATOR_SUPPLY("ext_5v",		NULL),
-	REGULATOR_SUPPLY("ext_ddr3",		NULL),
 	REGULATOR_SUPPLY("vbus",		"msm_ehci_host.0"),
 };
 #endif /* CONFIG_USB_OTG */	
@@ -405,7 +402,6 @@ VREG_CONSUMERS(L36) = {
 };
 VREG_CONSUMERS(BOOST) = {
 	REGULATOR_SUPPLY("8917_boost",		NULL),
-	REGULATOR_SUPPLY("ext_ddr3",		NULL),
 	REGULATOR_SUPPLY("vbus",		"msm_ehci_host.0"),
 	REGULATOR_SUPPLY("hdmi_mvs",		"hdmi_msm.0"),
 };
@@ -689,7 +685,7 @@ msm8064_pm8921_regulator_pdata[] __devinitdata = {
 	 */
 	PM8XXX_NLDO1200(L26, "8921_l26", 0, 1, 375000, 1050000, 200, "8921_s7",
 		0, 1),
-#ifdef CONFIG_USB_OTG //#if defined(CONFIG_MACH_LGE)
+#ifdef CONFIG_USB_OTG //                            
 	/*           ID        name     always_on pd       en_t supply reg_ID */
 	PM8XXX_VS300(USB_OTG,  "8921_usb_otg",  0, 1,         0, "ext_5v", 2),
 #else //Qualcomm original
@@ -754,7 +750,7 @@ apq8064_rpm_regulator_init_data[] __devinitdata = {
 	/* HSUSB 3p3: max 3.5v */
 	RPM_LDO(L3,  0, 1, 0, 3075000, 3500000, NULL,          0,     0),
 #else	
-	RPM_LDO(L3,  0, 1, 0, 3075000, 3075000, NULL,          0,     0),
+	RPM_LDO(L3,  0, 1, 0, 3075000, 3300000, NULL,          0,     0),
 #endif
 	RPM_LDO(L4,  1, 1, 0, 1800000, 1800000, NULL,          0, 10000),
 	RPM_LDO(L5,  0, 1, 0, 2950000, 2950000, NULL,          0,     0),
@@ -776,7 +772,7 @@ apq8064_rpm_regulator_init_data[] __devinitdata = {
 	RPM_LDO(L13, 0, 0, 0, 2220000, 2220000, NULL,          0,     0),
 	RPM_LDO(L14, 0, 1, 0, 1800000, 1800000, NULL,          0,     0),
 #if defined(CONFIG_MACH_LGE)
-	RPM_LDO(L15, 0, 1, 0, 3300000, 3300000, NULL, 		   0, 	 19),	//yoogyeong.lee@lge.com
+	RPM_LDO(L15, 0, 1, 0, 3300000, 3300000, NULL, 		   0, 	 19),	//                     
 #else
 	RPM_LDO(L15, 0, 1, 0, 1800000, 2950000, NULL,          0,     0),
 #endif
@@ -791,15 +787,15 @@ apq8064_rpm_regulator_init_data[] __devinitdata = {
 #else
 	RPM_LDO(L18, 0, 1, 0, 1300000, 1800000, "8921_s4",     0,     0),
 #endif
-/* LGE_CHANGE_S, Power setting for 13M AF, 2012.04.20, yt.jeon@lge.com */
+/*                                                                     */
 #if defined(CONFIG_MACH_LGE) && defined(CONFIG_IMX091)
 	RPM_LDO(L21, 0, 1, 0, 1800000, 1800000, "8921_s8",   0,	  0),
 #else
 	RPM_LDO(L21, 0, 1, 0, 1050000, 1050000, NULL,          0,     0),
 #endif
-/* LGE_CHANGE_E, Power setting for 13M AF, 2012.04.20, yt.jeon@lge.com */
+/*                                                                     */
 #if defined(CONFIG_MACH_LGE)
-	RPM_LDO(L22, 0, 1, 0, 1800000, 1800000, NULL,          0,     0),	//yoogyeong.lee@lge.com
+	RPM_LDO(L22, 0, 1, 0, 1800000, 1800000, NULL,          0,     0),	//                     
 #else
 	RPM_LDO(L22, 0, 1, 0, 2600000, 2600000, NULL,          0,     0),
 #endif	
@@ -808,16 +804,16 @@ apq8064_rpm_regulator_init_data[] __devinitdata = {
 	RPM_LDO(L25, 1, 1, 0, 1250000, 1250000, "8921_s1", 10000, 10000),
 	RPM_LDO(L27, 0, 0, 0, 1100000, 1100000, "8921_s7",     0,     0),
 	RPM_LDO(L28, 0, 1, 0, 1050000, 1050000, "8921_s7",     0,     0),
-/* LGE_CHANGE_S sungwoo.cho@lge.com 
- * It is setting for HEADSET MICBIAS that is always on */
- //[LGE] seungkyu.joo, 2012-12-18 , HW Request for enabling apple headset mic
+/*                                  
+                                                       */
+ //                                                                          
 #if 1//defined(CONFIG_MACH_APQ8064_J1SK)|| defined(CONFIG_MACH_APQ8064_J1KT)|| defined(CONFIG_MACH_APQ8064_J1U)|| defined(CONFIG_MACH_APQ8064_J1A)
 	//||defined(CONFIG_MACH_APQ8064_J1R) || defined(CONFIG_MACH_APQ8064_J1B) || defined(CONFIG_MACH_APQ8064_J1TL) || defined(CONFIG_MACH_APQ8064_J1SP)
 	RPM_LDO(L29, 0, 1, 1, 2700000, 2700000, NULL,          0,     0), //8921_l29
 #else
 	RPM_LDO(L29, 0, 1, 1, 2000000, 2000000, NULL,          0,     0), //8921_l29
 #endif
-/* LGE_CHANGE_E sungwoo.cho@lge.com */ 
+/*                                  */ 
 	/*     ID  a_on pd ss                   supply */
 	RPM_VS(LVS1, 0, 1, 0,                   "8921_s4"),
 	RPM_VS(LVS3, 0, 1, 0,                   "8921_s4"),
@@ -905,5 +901,24 @@ void __init configure_apq8064_pm8917_power_grid(void)
 			rpm_data->init_data.num_consumer_supplies
 				= ARRAY_SIZE(vreg_consumers_8917_S1);
 		}
+
+		/*
+		 * Currently min/max voltage level for LD03 was set to 3.075V.
+		 * But some Full speed USB headsets requires higher cross over
+		 * voltage. The cross over voltage is directly proportional
+		 * to the phy 3.3V rail voltage. So modified the max voltage
+		 * level of LD03 to 3.3V. But apq8064_rpm_regulator_init_data
+		 * is shared between PM8921 and PM8917, so set max_uV back to
+		 * 3.075V for PM8917.
+		 */
+		 if (rpm_data->id == RPM_VREG_ID_PM8921_L3)
+			rpm_data->init_data.constraints.max_uV = 3075000;
+
 	}
+
+	/*
+	 * Switch to 8960_PM8917 rpm-regulator version so that TCXO workaround
+	 * is applied to PM8917 regulators L25, L26, L27, and L28.
+	 */
+	apq8064_rpm_regulator_pdata.version = RPM_VREG_VERSION_8960_PM8917;
 }

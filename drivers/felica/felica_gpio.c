@@ -31,7 +31,9 @@ int felica_gpio_open(int gpionum, int direction, int value)
 
   if(rc)
   {
-    FELICA_DEBUG_MSG("[FELICA] ERROR - gpio_tlmm_config \n");
+    #ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA_GPIO] ERROR - gpio_tlmm_config \n");
+	#endif
     return rc;
   }
 
@@ -52,7 +54,9 @@ int felica_gpio_open(int gpionum, int direction, int value)
 
     if(rc)
     {
-      FELICA_DEBUG_MSG("[FELICA] ERROR -  gpio_direction_input \n");
+      #ifdef FEATURE_DEBUG_HIGH
+      FELICA_DEBUG_MSG("[FELICA_GPIO] ERROR -  gpio_direction_input \n");
+	  #endif
       return rc;
     }
   }
@@ -62,7 +66,9 @@ int felica_gpio_open(int gpionum, int direction, int value)
 
     if(rc)
     {
-      FELICA_DEBUG_MSG("[FELICA] ERROR - gpio_tlmm_config \n");
+      #ifdef FEATURE_DEBUG_HIGH
+      FELICA_DEBUG_MSG("[FELICA_GPIO] ERROR - gpio_tlmm_config \n");
+	  #endif
       return rc;
     }
 
@@ -70,7 +76,9 @@ int felica_gpio_open(int gpionum, int direction, int value)
 
     if(rc)
     {
-      FELICA_DEBUG_MSG("[FELICA] ERROR -  gpio_direction_output \n");
+      #ifdef FEATURE_DEBUG_HIGH
+      FELICA_DEBUG_MSG("[FELICA_GPIO] ERROR -  gpio_direction_output \n");
+	  #endif
       return rc;
     }
   }
@@ -104,9 +112,8 @@ int felica_gpio_read(int gpionum)
 */
 int felica_get_rfs_gpio_num(void)
 {
-#if defined(CONFIG_LGE_FELICA_ONLY)
-	return GPIO_FELICA_RFS;
-#else
+/* If it has different GPIO number each HW version, please use this route. */
+#if 0
   int gpionum = GPIO_FELICA_RFS;
 
   if (lge_get_board_revno() > HW_REV_B)
@@ -118,7 +125,10 @@ int felica_get_rfs_gpio_num(void)
     gpionum = GPIO_FELICA_RFS_REV_B;  
   }
 
-	return gpionum;
+    FELICA_DEBUG_MSG("[FELICA_COMMON] felica_get_rfs_gpio_num(%d) \n",gpionum);
+	return gpionum;	
+#else
+	return GPIO_FELICA_RFS;
 #endif
 }
 
@@ -129,9 +139,8 @@ int felica_get_rfs_gpio_num(void)
 */
 int felica_get_int_gpio_num(void)
 {
-#if defined(CONFIG_LGE_FELICA_ONLY)
-	return GPIO_FELICA_INT;
-#else
+/* If it has different GPIO number each HW version, please use this route. */	
+#if 0
   int gpionum = GPIO_FELICA_INT;
 
   if (lge_get_board_revno() > HW_REV_B)
@@ -142,7 +151,8 @@ int felica_get_int_gpio_num(void)
   {
     gpionum = GPIO_FELICA_INT_REV_B;  
   }
-
 	return gpionum;
+#else	
+	return GPIO_FELICA_INT;
 #endif
 }

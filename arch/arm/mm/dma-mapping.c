@@ -22,6 +22,7 @@
 #include <linux/memblock.h>
 #include <linux/slab.h>
 #include <linux/iommu.h>
+#include <linux/io.h>
 #include <linux/vmalloc.h>
 
 #include <asm/memory.h>
@@ -36,7 +37,6 @@
 #include <asm/dma-iommu.h>
 
 #include "mm.h"
-
 
 /*
  * The DMA API is built upon the notion of "buffer ownership".  A buffer
@@ -231,9 +231,9 @@ static void __dma_free_buffer(struct page *page, size_t size)
 }
 
 #ifdef CONFIG_MMU
-
-#define CONSISTENT_OFFSET(x)	(((unsigned long)(x) - consistent_base) >> PAGE_SHIFT)
-#define CONSISTENT_PTE_INDEX(x) (((unsigned long)(x) - consistent_base) >> PMD_SHIFT)
+#ifdef CONFIG_HUGETLB_PAGE
+#error ARM Coherent DMA allocator does not (yet) support huge TLB
+#endif
 
 static void *__alloc_remap_buffer(struct device *dev, size_t size, gfp_t gfp,
 				 pgprot_t prot, struct page **ret_page,

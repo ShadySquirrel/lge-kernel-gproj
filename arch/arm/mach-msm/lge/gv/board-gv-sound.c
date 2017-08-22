@@ -189,7 +189,7 @@ static int __init lge_hsd_fsa8008_init(void)
 
     lge_bd_rev = lge_get_board_revno();
 
-    lge_hs_pdata.set_headset_mic_bias = NULL; //2012-08-24 mikyoung.chang@lge.com mic bias is controlled by mic_en
+    lge_hs_pdata.set_headset_mic_bias = NULL; //                                                                  
     printk(KERN_INFO "lge_bd_rev : %d, so set set_headset_mic_bias = NULL!!!\n", lge_bd_rev);
 
 	return platform_device_register(&lge_hsd_device);
@@ -214,8 +214,8 @@ static struct max1462x_platform_data lge_hs_pdata_rev_b = {
 	.gpio_swd	= MAX1462X_GPIO_EAR_KEY_INT_REVB,		        // .gpio_key    = GPIO_EAR_KEY_INT,
 	.external_ldo_mic_bias	= MAX1462X_GPIO_MIC_BIAS_CONTROL,	// .gpio_jpole  = GPIO_EARPOL_DETECT,
 	.set_headset_mic_bias = NULL,
-	.gpio_set_value_func = gpio_set_value_cansleep,         //If gpio connect the PMIC, function use cansleep
-	.gpio_get_value_func = gpio_get_value,                  //if gpio connect the AP, function don't use cansleep
+	//.gpio_set_value_func = gpio_set_value_cansleep,         //If gpio connect the PMIC, function use cansleep
+	//.gpio_get_value_func = gpio_get_value,                  //if gpio connect the AP, function don't use cansleep
 	.latency_for_detection = 75,
 	.latency_for_key = 100,                                 //latency for key detect (ms)
 };
@@ -231,8 +231,8 @@ static struct max1462x_platform_data lge_hs_pdata_rev_c = {
 	.gpio_swd	= MAX1462X_GPIO_EAR_KEY_INT_REVC,		        // .gpio_key    = GPIO_EAR_KEY_INT,
 	.external_ldo_mic_bias	= MAX1462X_GPIO_MIC_BIAS_CONTROL,	// .gpio_jpole  = GPIO_EARPOL_DETECT,
 	.set_headset_mic_bias = NULL,
-	.gpio_set_value_func = gpio_set_value_cansleep,         //If gpio connect the PMIC, function use cansleep
-	.gpio_get_value_func = gpio_get_value_cansleep,         //if gpio connect the AP, function don't use cansleep
+	//.gpio_set_value_func = gpio_set_value_cansleep,         //If gpio connect the PMIC, function use cansleep
+	//.gpio_get_value_func = gpio_get_value_cansleep,         //if gpio connect the AP, function don't use cansleep
 	.latency_for_detection = 75,
 	.latency_for_key = 100,                                 //latency for key detect (ms)
 };
@@ -248,8 +248,8 @@ static struct max1462x_platform_data lge_hs_pdata_rev_1_0 = {
 	.gpio_swd	= MAX1462X_GPIO_EAR_KEY_INT_REVC,		        // .gpio_key    = GPIO_EAR_KEY_INT,
 	.external_ldo_mic_bias	= MAX1462X_GPIO_MIC_BIAS_CONTROL,	// .gpio_jpole  = GPIO_EARPOL_DETECT,
 	.set_headset_mic_bias = set_headset_mic_bias_l10,
-	.gpio_set_value_func = gpio_set_value_cansleep,         //If gpio connect the PMIC, function use cansleep
-	.gpio_get_value_func = gpio_get_value_cansleep,         //if gpio connect the AP, function don't use cansleep
+	//.gpio_set_value_func = gpio_set_value_cansleep,         //If gpio connect the PMIC, function use cansleep
+	//.gpio_get_value_func = gpio_get_value_cansleep,         //if gpio connect the AP, function don't use cansleep
 	.latency_for_detection = 75,
 	.latency_for_key = 100,                                 //latency for key detect (ms)
 };

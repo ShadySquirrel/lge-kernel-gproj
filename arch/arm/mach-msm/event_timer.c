@@ -106,7 +106,6 @@ exit_is_next_event:
 	return ret;
 }
 
-
 /**
  * is_event_active(): Helper function to check if the timer for a given event
  *                    has been started.
@@ -243,15 +242,12 @@ void activate_event_timer(struct event_timer_info *event, ktime_t event_time)
 	if (!event)
 		return;
 
-	/*
 	if (msm_event_debug_mask && MSM_EVENT_TIMER_DEBUG)
 		pr_info("%s: Adding event timer @ %lu", __func__,
 				(unsigned long)ktime_to_us(event_time));
-	*/
 
 	spin_lock(&event_setup_lock);
 	event->node.expires = event_time;
-
 	/* Start hr timer and add event to rb tree */
 	setup_event_hrtimer(event);
 	spin_unlock(&event_setup_lock);
@@ -318,11 +314,9 @@ ktime_t get_next_event_time(void)
 		return next_event;
 
 	next_event = hrtimer_get_remaining(&event_hrtimer);
-/*
 	if (msm_event_debug_mask && MSM_EVENT_TIMER_DEBUG)
 		pr_info("%s: Next Event %lu", __func__,
 			(unsigned long)ktime_to_us(next_event));
-*/
 
 	return next_event;
 }

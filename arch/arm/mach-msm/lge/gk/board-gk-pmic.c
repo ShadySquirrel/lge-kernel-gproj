@@ -1,5 +1,4 @@
-/* Copyright (c) 2011-2012, Code Aurora Forum. All rights reserved.
- * Copyright (c) 2012, LGE Inc.
+/* Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -37,11 +36,11 @@
 #include <linux/max17043_fuelgauge.h>
 #endif
 
-// [[LGE_BSP_AUDIO, jeremy.pi@lge.com, Audience eS325 ALSA SoC Audio driver
+//                                                          
 #if defined(CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GKGLOBAL)
 #include <sound/esxxx.h>
 #endif /* CONFIG_MACH_APQ8064_GKATT */
-// ]]LGE_BSP_AUDIO, jeremy.pi@lge.com, Audience eS325 ALSA SoC Audio driver
+//                                                          
 
 struct pm8xxx_gpio_init {
 	unsigned			gpio;
@@ -147,21 +146,20 @@ static struct pm8xxx_gpio_init pm8921_gpios[] __initdata = {
 #else
 	PM8921_GPIO_OUTPUT(14, 1, HIGH),	/* HDMI Mux Selector */
 #endif
-/* LGE_CHANGE_S, For GV/GK 13M & 2.4M camera driver, 2012.08.15, gayoung85.lee@lge.com */
+/*                                                                                     */
 	PM8921_GPIO_OUTPUT(13, 0, HIGH), /* ISP_STBY */
-/* LGE_CHANGE_E, For GV/GK 13M & 2.4M camera driver, 2012.08.15, gayoung85.lee@lge.com */
-	PM8921_GPIO_OUTPUT(23, 0, HIGH),	/* touchscreen power FET */
+/*                                                                                     */
 //	PM8921_GPIO_OUTPUT_BUFCONF(25, 0, LOW, CMOS), /* DISP_RESET_N */
 //	PM8921_GPIO_OUTPUT_FUNC(26, 0, PM_GPIO_FUNC_2), /* Bl: Off, PWM mode */
 
-// [S] LGE_BT: MOD/ilbeom.kim/'12-10-26 - [GK] BRCM INITIAL PORTING
+//                                                                 
 #ifdef CONFIG_LGE_BLUESLEEP
 	PM8921_GPIO_OUTPUT(30, 0, HIGH),
 #else
 // Original
 	PM8921_GPIO_OUTPUT_VIN(30, 1, PM_GPIO_VIN_VPH), /* SMB349 susp line */
 #endif
-// [E] LGE_BT: MOD/ilbeom.kim/'12-10-26 - [GK] BRCM INITIAL PORTING
+//                                                                 
 	PM8921_GPIO_OUTPUT_BUFCONF(36, 1, LOW, OPEN_DRAIN),
 #ifdef CONFIG_BCMDHD
 	PM8921_GPIO_OUTPUT_FUNC(43, 0, PM_GPIO_FUNC_1),
@@ -169,25 +167,25 @@ static struct pm8xxx_gpio_init pm8921_gpios[] __initdata = {
 	PM8921_GPIO_OUTPUT_FUNC(44, 0, PM_GPIO_FUNC_2),
 #endif
 	PM8921_GPIO_OUTPUT(33, 0, HIGH),
-/* LGE_CHANGE_S, For GV/GK 2.4M front camera driver, 2012.07.20, gayoung85.lee@lge.com */
+/*                                                                                     */
 	PM8921_GPIO_OUTPUT(20, 0, HIGH), /* ISP_HOST_INT */
 	PM8921_GPIO_OUTPUT(35, 0, HIGH), /* VT_PWR_EN */
 //	PM8921_GPIO_INPUT(35, PM_GPIO_PULL_UP_30),
-/* LGE_CHANGE_E, For GV/GK 2.4M front camera driver, 2012.07.20, gayoung85.lee@lge.com */
+/*                                                                                     */
 
-// [[LGE_BSP_AUDIO, jeremy.pi@lge.com, Audience eS325 ALSA SoC Audio driver
+//                                                          
 #if defined(CONFIG_SND_SOC_ES325_SLIM)
 	PM8921_GPIO_INPUT(38, PM_GPIO_PULL_UP_30),
 #else
 	PM8921_GPIO_OUTPUT(38, 0, LOW),
 #endif /* CONFIG_SND_SOC_ES325_SLIM */
-// ]]LGE_BSP_AUDIO, jeremy.pi@lge.com, Audience eS325 ALSA SoC Audio driver
+//                                                          
 	/* TABLA CODEC RESET */
-	PM8921_GPIO_OUTPUT(34, 1, HIGH),
+	PM8921_GPIO_OUTPUT(34, 0, MED),
 	PM8921_GPIO_OUTPUT(13, 0, HIGH),               /* PCIE_CLK_PWR_EN */
-/* LGE_CHANGE_S, delete gpio12 pullup setting for tdmb inner <-> ear antenna switching, 2012.10.18, wonhee.jeong@lge.com */
+/*                                                                                                                       */
 	//PM8921_GPIO_INPUT(12, PM_GPIO_PULL_UP_30),     /* PCIE_WAKE_N */
-/* LGE_CHANGE_E, delete gpio12 pullup setting for tdmb inner <-> ear antenna switching, 2012.10.18, wonhee.jeong@lge.com */
+/*                                                                                                                       */
 #ifdef CONFIG_LGE_WIRELESS_CHARGER
 	PM8921_GPIO_OUTPUT(26, 0, HIGH),		    /* CHG_STAT */
 	PM8921_GPIO_INPUT(25, PM_GPIO_PULL_NO),//PM_GPIO_PULL_UP_30),	 /* WLC_ACTIVE */
@@ -203,7 +201,7 @@ static struct pm8xxx_gpio_init pm8921_gpios[] __initdata = {
 
 };
 
-/* changduk.ryu@lge.com Disabled Unused GPIOs and MPPS*/
+/*                                                    */
 #if defined(CONFIG_MACH_LGE)
 static struct pm8xxx_gpio_init pm8921_disabled_gpios[] __initdata= {
 	PM8921_GPIO_DISABLE(3),
@@ -243,7 +241,6 @@ static struct pm8xxx_gpio_init pm8921_mpq8064_hrd_gpios[] __initdata = {
 /* Initial PM8917 GPIO configurations */
 static struct pm8xxx_gpio_init pm8917_gpios[] __initdata = {
 	PM8921_GPIO_OUTPUT(14, 1, HIGH),	/* HDMI Mux Selector */
-	PM8921_GPIO_OUTPUT(23, 0, HIGH),	/* touchscreen power FET */
 	PM8921_GPIO_OUTPUT_BUFCONF(25, 0, LOW, CMOS), /* DISP_RESET_N */
 	PM8921_GPIO_OUTPUT(26, 1, HIGH), /* Backlight: on */
 	PM8921_GPIO_OUTPUT_BUFCONF(36, 1, LOW, OPEN_DRAIN),
@@ -265,13 +262,17 @@ static struct pm8xxx_gpio_init pm8917_cdp_kp_gpios[] __initdata = {
 	PM8921_GPIO_INPUT(17, PM_GPIO_PULL_UP_1P5),	/* SD_WP */
 };
 
+static struct pm8xxx_gpio_init pm8921_8917_cdp_ts_gpios[] __initdata = {
+	PM8921_GPIO_OUTPUT(23, 0, HIGH),	/* touchscreen power FET */
+};
+
 static struct pm8xxx_gpio_init pm8921_mpq_gpios[] __initdata = {
 	PM8921_GPIO_INIT(27, PM_GPIO_DIR_IN, PM_GPIO_OUT_BUF_CMOS, 0,
 			PM_GPIO_PULL_NO, PM_GPIO_VIN_VPH, PM_GPIO_STRENGTH_NO,
 			PM_GPIO_FUNC_NORMAL, 0, 0),
 };
 
-/* changduk.ryu@lge.com Disabled Unused GPIOs and MPPS*/
+/*                                                    */
 #if defined(CONFIG_MACH_LGE)
 static struct pm8xxx_mpp_init pm8xxx_disabled_mpps[] __initdata = {
 		PM8921_MPP_INIT(2, SINK, PM8XXX_MPP_CS_OUT_5MA, CS_CTRL_DISABLE),
@@ -284,11 +285,14 @@ static struct pm8xxx_mpp_init pm8xxx_disabled_mpps[] __initdata = {
 /* Initial PM8XXX MPP configurations */
 static struct pm8xxx_mpp_init pm8xxx_mpps[] __initdata = {
 	PM8921_MPP_INIT(3, D_OUTPUT, PM8921_MPP_DIG_LEVEL_VPH, DOUT_CTRL_LOW),
+	/* External 5V regulator enable; shared by HDMI and USB_OTG switches. */
+	PM8921_MPP_INIT(7, D_OUTPUT, PM8921_MPP_DIG_LEVEL_VPH, DOUT_CTRL_LOW),
 	PM8921_MPP_INIT(8, D_OUTPUT, PM8921_MPP_DIG_LEVEL_S4, DOUT_CTRL_LOW),
 	/*MPP9 is used to detect docking station connection/removal on Liquid*/
 	/*MPP1 is used to read ADC for headset 3 Button read key*/
 	PM8921_MPP_INIT(1, D_INPUT, PM8921_MPP_DIG_LEVEL_S4, DIN_TO_INT),
 };
+
 #if defined(CONFIG_LGE_WIRELESS_CHARGER)
 struct pm_gpio pm_gpio_wlc_ts_ctrl = {
 	.direction = PM_GPIO_DIR_IN,
@@ -303,7 +307,13 @@ struct pm_gpio pm_gpio_wlc_ts_ctrl = {
 };
 #endif
 
-/* LGE_CHANGE_S, For GK/GV Rev.E bring-up, 2012.10.26, gayoung85.lee[Start] */
+static struct pm8xxx_gpio_init pm8921_sglte2_gpios[] __initdata = {
+	PM8921_GPIO_OUTPUT(23, 1, HIGH),		/* PM2QSC_SOFT_RESET */
+	PM8921_GPIO_OUTPUT(21, 1, HIGH),		/* PM2QSC_KEYPADPWR */
+};
+
+
+/*                                                                          */
 #if defined (CONFIG_IMX132) || defined(CONFIG_CE1702)
 struct pm_gpio pm_gpio_cam_rst_ctrl = {
 	.direction = PM_GPIO_DIR_OUT,
@@ -317,7 +327,7 @@ struct pm_gpio pm_gpio_cam_rst_ctrl = {
 	.disable_pin = 0
 };
 #endif
-/* LGE_CHANGE_S, For GK/GV Rev.E bring-up, 2012.10.26, gayoung85.lee[End] */
+/*                                                                        */
 
 void __init apq8064_configure_gpios(struct pm8xxx_gpio_init *data, int len)
 {
@@ -350,7 +360,7 @@ void __init apq8064_configure_gpios(struct pm8xxx_gpio_init *data, int len)
 #endif
 }
 
-// [[LGE_BSP_AUDIO, jeremy.pi@lge.com, Audience eS325 ALSA SoC Audio driver
+//                                                          
 #if defined(CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GKGLOBAL)
 int es325_gpio_init(void)
 {
@@ -418,12 +428,12 @@ reset_gpio_request_error:
 	return rc;
 }
 #endif /* CONFIG_MACH_APQ8064_GKATT */
-// ]]LGE_BSP_AUDIO, jeremy.pi@lge.com, Audience eS325 ALSA SoC Audio driver
+//                                                          
 
 void __init apq8064_pm8xxx_gpio_mpp_init(void)
 {
 	int i, rc;
-/* changduk.ryu@lge.com Disabled Unused GPIOs and MPPS*/
+/*                                                    */
 #if defined(CONFIG_MACH_LGE)
 	hw_rev_type lge_bd_rev = HW_REV_EVB1;
 
@@ -454,11 +464,20 @@ void __init apq8064_pm8xxx_gpio_mpp_init(void)
 		else
 			apq8064_configure_gpios(pm8917_cdp_kp_gpios,
 					ARRAY_SIZE(pm8917_cdp_kp_gpios));
+
+		apq8064_configure_gpios(pm8921_8917_cdp_ts_gpios,
+				ARRAY_SIZE(pm8921_8917_cdp_ts_gpios));
 	}
 
-	if (machine_is_apq8064_mtp())
+	if (machine_is_apq8064_mtp()) {
 		apq8064_configure_gpios(pm8921_mtp_kp_gpios,
 					ARRAY_SIZE(pm8921_mtp_kp_gpios));
+		if (socinfo_get_platform_subtype() ==
+					PLATFORM_SUBTYPE_SGLTE2) {
+			apq8064_configure_gpios(pm8921_sglte2_gpios,
+					ARRAY_SIZE(pm8921_sglte2_gpios));
+		}
+	}
 
 	if (machine_is_mpq8064_cdp() || machine_is_mpq8064_hrd()
 	    || machine_is_mpq8064_dtv())
@@ -478,16 +497,16 @@ void __init apq8064_pm8xxx_gpio_mpp_init(void)
 		}
 	}
 
-// [[LGE_BSP_AUDIO, jeremy.pi@lge.com, Audience eS325 ALSA SoC Audio driver
+//                                                          
 #if defined(CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GKGLOBAL)
 	es325_gpio_init();
 #endif /* CONFIG_MACH_APQ8064_GKATT */
-// ]]LGE_BSP_AUDIO, jeremy.pi@lge.com, Audience eS325 ALSA SoC Audio driver
+//                                                          
 }
 
 static struct pm8xxx_pwrkey_platform_data apq8064_pm8921_pwrkey_pdata = {
 	.pull_up		= 1,
-	.kpd_trigger_delay_us	= 15625,
+	.kpd_trigger_delay_us	= 31250, // increase debounce time 15625-> 31250 for slove power long key issue
 	.wakeup			= 1,
 };
 
@@ -496,7 +515,7 @@ static struct pm8xxx_misc_platform_data apq8064_pm8921_misc_pdata = {
 };
 
 
-#define PM8921_LC_LED_MAX_CURRENT	4	/* I = 4mA */
+#define PM8921_LC_LED_MAX_CURRENT	12	/* I = 12mA */
 #if defined(CONFIG_MACH_APQ8064_GK_KR) || defined(CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GKGLOBAL)
 #define PM8921_KEY_LED_MAX_CURRENT	16	/* I = 16mA */
 #else
@@ -523,7 +542,7 @@ static struct led_info pm8921_led_info_rev_f[] = {
 			},
 #endif
 
-#if defined(CONFIG_MACH_LGE)	/* yoogyeong.lee@lge.com KEY_LED */
+#if defined(CONFIG_MACH_LGE)	/*                               */
 			[1] = {
 				.name			= "button-backlight",
 			},
@@ -543,9 +562,20 @@ static struct led_platform_data pm8921_led_core_pdata_rev_f = {
 
 
 static struct led_info pm8921_led_info[] = {
+#if defined(CONFIG_MACH_LGE)
 			[0] = {
 				.name			= "button-backlight",
 			},
+#else
+	[0] = {
+		.name			= "led:red",
+		.default_trigger	= "battery-charging",
+	},
+	[1] = {
+		.name			= "led:green",
+		.default_trigger	= "battery-full",
+	},
+#endif
 };
 
 static struct led_platform_data pm8921_led_core_pdata = {
@@ -601,7 +631,7 @@ static struct pm8xxx_led_config pm8921_led_configs_rev_f[] = {
 			},
 #endif
 
-#if defined(CONFIG_MACH_LGE)	/* yoogyeong.lee@lge.com KEY_LED */
+#if defined(CONFIG_MACH_LGE)	/*                               */
 			[1] = {
 				.id = PM8XXX_ID_LED_1,
 				.mode = PM8XXX_LED_MODE_MANUAL,
@@ -625,11 +655,30 @@ static struct pm8xxx_led_platform_data apq8064_pm8921_leds_pdata_rev_f = {
 };
 
 static struct pm8xxx_led_config pm8921_led_configs[] = {
+#if defined(CONFIG_MACH_LGE)
 			[0] = {
 				.id = PM8XXX_ID_LED_0,
 				.mode = PM8XXX_LED_MODE_MANUAL,
 				.max_current = PM8921_KEY_LED_MAX_CURRENT,
 			},
+#else
+	[0] = {
+		.id = PM8XXX_ID_LED_0,
+		.mode = PM8XXX_LED_MODE_PWM2,
+		.max_current = PM8921_LC_LED_MAX_CURRENT,
+		.pwm_channel = 5,
+		.pwm_period_us = PM8XXX_LED_PWM_PERIOD,
+		.pwm_duty_cycles = &pm8921_led0_pwm_duty_cycles,
+	},
+	[1] = {
+		.id = PM8XXX_ID_LED_1,
+		.mode = PM8XXX_LED_MODE_PWM1,
+		.max_current = PM8921_LC_LED_MAX_CURRENT,
+		.pwm_channel = 4,
+		.pwm_period_us = PM8XXX_LED_PWM_PERIOD,
+		.pwm_duty_cycles = &pm8921_led0_pwm_duty_cycles,
+	},
+#endif
 };
 
 static struct pm8xxx_led_platform_data apq8064_pm8921_leds_pdata = {
@@ -707,7 +756,7 @@ apq8064_pm8921_irq_pdata __devinitdata = {
 
 static struct pm8xxx_rtc_platform_data
 apq8064_pm8921_rtc_pdata = {
-	.rtc_write_enable       = true,
+	.rtc_write_enable       = false,
 	.rtc_alarm_powerup      = false,
 };
 
@@ -730,7 +779,7 @@ static int apq8064_pm8921_therm_mitigation[] = {
 static struct pm8921_charger_platform_data apq8064_pm8921_chg_pdata __devinitdata = {
 
 	/* max charging time in minutes incl. fast and trkl. it will be changed in future  */
-	.safety_time		= 512, /* 300 change max value for charging time */
+	//.safety_time		= 512, /* 300 change max value for charging time */
 	.update_time		= 60000,
 	.max_voltage		= MAX_VOLTAGE_MV,
 
@@ -792,13 +841,13 @@ static struct pm8921_charger_platform_data apq8064_pm8921_chg_pdata __devinitdat
 	/* for led on, off control */
 	.led_src_config		= LED_SRC_MIN_VPH_5V,
 	.rconn_mohm    = 18,
+	.enable_tcxo_warmup_delay = true,	
 };
 #else /* qualcomm original code */
 #define MAX_VOLTAGE_MV          4200
 #define CHG_TERM_MA		100
 static struct pm8921_charger_platform_data
 apq8064_pm8921_chg_pdata __devinitdata = {
-	.safety_time		= 180,
 	.update_time		= 60000,
 	.max_voltage		= MAX_VOLTAGE_MV,
 	.min_voltage		= 3200,
@@ -806,7 +855,7 @@ apq8064_pm8921_chg_pdata __devinitdata = {
 	.resume_voltage_delta	= 100,
 	.term_current		= CHG_TERM_MA,
 	.cool_temp		= 10,
-	.warm_temp		= 40,
+	.warm_temp		= 45,
 	.temp_check_period	= 1,
 	.max_bat_chg_current	= 1100,
 	.cool_bat_chg_current	= 350,
@@ -816,12 +865,13 @@ apq8064_pm8921_chg_pdata __devinitdata = {
 	.thermal_mitigation	= apq8064_pm8921_therm_mitigation,
 	.thermal_levels		= ARRAY_SIZE(apq8064_pm8921_therm_mitigation),
 	.rconn_mohm		= 18,
+	.enable_tcxo_warmup_delay = true,
 };
 #endif
 
 static struct pm8xxx_ccadc_platform_data
 apq8064_pm8xxx_ccadc_pdata = {
-	.r_sense		= 10,
+	.r_sense_uohm		= 10000,
 	.calib_delay_ms		= 600000,
 };
 
@@ -839,18 +889,26 @@ apq8064_pm8xxx_ccadc_pdata = {
 #define BMS_2100MAH_OFF3500
 static struct pm8921_bms_platform_data
 apq8064_pm8921_bms_pdata __devinitdata = {
-	.battery_type	= BATT_2200_LGE,
-#ifdef BMS_2100MAH_OFF3500
-	.battery_type	= BATT_2100_LGE,
-#endif
+	.battery_type	= BATT_UNKNOWN,
 	.ignore_shutdown_soc = 0,
-	.r_sense			= 10,
+	.r_sense_uohm			= 10000,
 	.v_cutoff			= 3600, //3400,
 	.max_voltage_uv			= MAX_VOLTAGE_MV * 1000,
 	.rconn_mohm			= 44, //18,
 	.shutdown_soc_valid_limit	= 20,
 	.adjust_soc_low_threshold	= 25,
 	.chg_term_ua   = CHG_TERM_MA * 1000,
+	.normal_voltage_calc_ms		= 20000,
+	.low_voltage_calc_ms		= 1000,
+	.alarm_low_mv			= 3400,
+	.alarm_high_mv			= 4000,
+	.high_ocv_correction_limit_uv	= 50,
+	.low_ocv_correction_limit_uv	= 100,
+	.hold_soc_est			= 3,
+	.enable_fcc_learning		= 1,
+	.min_fcc_learning_soc		= 20,
+	.min_fcc_ocv_pc			= 30,
+	.min_fcc_learning_samples	= 5,
 };
 
 static unsigned int keymap[] = {
@@ -968,7 +1026,7 @@ struct i2c_registry {
 	int                    len;
 };
 
-/* START: dukyong.kim@lge.com 2012-01-16 Implement Quickstart for Test Mode and SOC Accurency */
+/*                                                                                            */
 #if 0
 static struct max17043_ocv_to_soc_data cal_data[] = {
 	{3470,	 0}, {3610,	5}, {3660,	 5}, {3668,	 11},
@@ -978,22 +1036,22 @@ static struct max17043_ocv_to_soc_data cal_data[] = {
 
 };
 #endif
-/* END: dukyong.kim@lge.com 2012-01-16 */
+/*                                     */
 
-/* BEGIN: hiro.kwon@lge.com 2011-12-22 RCOMP update when the temperature of the cell changes */
+/*                                                                                           */
 static struct max17043_platform_data max17043_pdata = {
 	.starting_rcomp	=	0x4C,
 	.temp_co_hot	=	-75,
 	.temp_co_cold	=	-585,
 	//.soc_cal_data	=	cal_data,
 };
-/* END: hiro.kwon@lge.com 2011-12-22 */
+/*                                   */
 static struct i2c_board_info max17043_i2c_info[] = {
 	{
 		I2C_BOARD_INFO("max17043", MAX17043_FUELGAUGE_I2C_ADDR),
-		/* BEGIN: hiro.kwon@lge.com 2011-12-22 RCOMP update when the temperature of the cell changes */
+		/*                                                                                           */
 		.platform_data = (void *)&max17043_pdata,
-		/* END: hiro.kwon@lge.com 2011-12-22 */
+		/*                                   */
 		.irq = FUEL_GAUGE_INT_N,
 	}
 };
@@ -1007,10 +1065,10 @@ static struct i2c_registry gk_i2c_pm_subsystem __initdata = {
 
 void __init lge_add_i2c_pm_subsystem_devices(void)
 {
-	/* LGE_CHANGE
-	 * 2011-12-03, hyuncheol0.kim@lge.com
-	 * Work-around code to support old H/W revision.
-	 */
+	/*           
+                                      
+                                                 
+  */
 
 	/* Run the array and install devices as appropriate */
 	i2c_register_board_info(gk_i2c_pm_subsystem.bus,
@@ -1052,7 +1110,7 @@ void __init apq8064_init_pmic(void)
 #endif
 
 #ifndef CONFIG_MACH_LGE
-/* LGE_S jungshik.park@lge.com 2012-04-18 for lge battery type */
+/*                                                             */
 	if (machine_is_apq8064_mtp()) {
 		apq8064_pm8921_bms_pdata.battery_type = BATT_PALLADIUM;
 	} else if (machine_is_apq8064_liquid()) {
@@ -1060,7 +1118,13 @@ void __init apq8064_init_pmic(void)
 	} else if (machine_is_apq8064_cdp()) {
 		apq8064_pm8921_chg_pdata.has_dc_supply = true;
 	}
-/* LGE_E jungshik.park@lge.com 2012-04-18 for lge battery type */
+
+	if (!machine_is_apq8064_mtp() && !machine_is_apq8064_liquid())
+		apq8064_pm8921_chg_pdata.battery_less_hardware = 1;
+
+	if (machine_is_mpq8064_hrd())
+		apq8064_pm8921_chg_pdata.disable_chg_rmvl_wrkarnd = 1;
+/*                                                             */
 #endif
 
 	apq8064_pm8921_adc_pdata.apq_therm = true;

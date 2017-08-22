@@ -19,18 +19,18 @@
  */
 #include <linux/err.h>
 #include <linux/init.h>
-#include <linux/err.h>
-#include <linux/init.h>
 #include <linux/spinlock.h>
 #include <linux/io.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
+#include <linux/platform_device.h>
 
 #include <asm/cacheflush.h>
 #include <asm/hardware/cache-l2x0.h>
+#include <asm/irq_regs.h>
+#include <asm/pmu.h>
 
 #define CACHE_LINE_SIZE		32
-
 
 static void __iomem *l2x0_base;
 static DEFINE_RAW_SPINLOCK(l2x0_lock);

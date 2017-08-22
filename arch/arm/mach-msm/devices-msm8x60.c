@@ -45,6 +45,7 @@
 #ifdef CONFIG_MSM_DSPS
 #include <mach/msm_dsps.h>
 #endif
+#include <linux/android_pmem.h>
 #include <linux/gpio.h>
 #include <linux/delay.h>
 #include <mach/mdm.h>
@@ -347,6 +348,7 @@ static struct msm_serial_hslite_platform_data uart_gsbi9_pdata = {
 	.uart_tx_gpio	= 67,
 	.uart_rx_gpio	= 66,
 	.line		= 1,
+	.set_uart_clk_zero = true,
 };
 
 static struct resource msm_uart_gsbi9_resources[] = {
@@ -737,6 +739,7 @@ static struct kgsl_device_platform_data kgsl_3d0_pdata = {
 	.num_levels = 5,
 	.set_grp_async = NULL,
 	.idle_timeout = HZ/5,
+	.nap_allowed = true,
 	.clk_map = KGSL_CLK_CORE | KGSL_CLK_IFACE | KGSL_CLK_MEM_IFACE,
 #ifdef CONFIG_MSM_BUS_SCALING
 	.bus_scale_table = &grp3d_bus_scale_pdata,
@@ -783,6 +786,7 @@ static struct kgsl_device_platform_data kgsl_2d0_pdata = {
 	.num_levels = 2,
 	.set_grp_async = NULL,
 	.idle_timeout = HZ/10,
+	.nap_allowed = true,
 	.clk_map = KGSL_CLK_CORE | KGSL_CLK_IFACE,
 #ifdef CONFIG_MSM_BUS_SCALING
 	.bus_scale_table = &grp2d0_bus_scale_pdata,
@@ -829,6 +833,7 @@ static struct kgsl_device_platform_data kgsl_2d1_pdata = {
 	.num_levels = 2,
 	.set_grp_async = NULL,
 	.idle_timeout = HZ/10,
+	.nap_allowed = true,
 	.clk_map = KGSL_CLK_CORE | KGSL_CLK_IFACE,
 #ifdef CONFIG_MSM_BUS_SCALING
 	.bus_scale_table = &grp2d1_bus_scale_pdata,
@@ -1729,7 +1734,7 @@ static void __init msm_register_device(struct platform_device *pdev, void *data)
 			  __func__, ret);
 }
 
-struct platform_device msm_lcdc_device = {
+static struct platform_device msm_lcdc_device = {
 	.name   = "lcdc",
 	.id     = 0,
 };

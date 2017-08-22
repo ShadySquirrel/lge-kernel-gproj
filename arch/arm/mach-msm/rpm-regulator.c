@@ -19,7 +19,6 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/slab.h>
-#include <linux/spinlock.h>
 #include <linux/string.h>
 #include <linux/platform_device.h>
 #include <linux/wakelock.h>
@@ -35,6 +34,7 @@
 #include "rpm-regulator-private.h"
 
 /* Debug Definitions */
+
 enum {
 	MSM_RPM_VREG_DEBUG_REQUEST = BIT(0),
 	MSM_RPM_VREG_DEBUG_VOTE = BIT(1),
@@ -366,7 +366,7 @@ static void tcxo_delayed_disable(void)
 				msecs_to_jiffies(TCXO_WARMUP_TIME_MS) + 1);
 }
 
-/* Spin lock needed for sleep-selectable regulators. */
+/* Mutex lock needed for sleep-selectable regulators. */
 static DEFINE_MUTEX(rpm_sleep_sel_lock);
 
 static int voltage_from_req(struct vreg *vreg)

@@ -33,14 +33,6 @@
  */
 /* [START] sungsookim */
 #ifdef CONFIG_LGE_PM
-/* LGE_S kwangjae1.lee@lge.com 2012-06-11 Add bms debugger */
-#define BMS_BATT_ATTR(_name)                                     \
-{                                                                   \
-	.attr = { .name = #_name, .mode = 0644 },                       \
-	.show = bms_batt_show_property,                              \
-	.store = bms_batt_store_property,                            \
-}
-/* LGE_E kwangjae1.lee@lge.com 2012-06-11 Add bms debugger */
 #define PSEUDO_BATT_ATTR(_name)                                     \
 {                                                                   \
 	.attr = { .name = #_name, .mode = 0644 },                       \
@@ -70,9 +62,9 @@ static ssize_t power_supply_show_property(struct device *dev,
 					  char *buf) {
 	static char *type_text[] = {
 		"Unknown", "Battery", "UPS", "Mains", "USB",
-		"USB_DCP", "USB_CDP", "USB_ACA", "BMS",
+		"USB_DCP", "USB_CDP", "USB_ACA",
 #ifdef CONFIG_LGE_WIRELESS_CHARGER
-		"WIRELESS"
+		"Wireless"
 #endif
 	};
 	static char *status_text[] = {
@@ -129,6 +121,8 @@ static ssize_t power_supply_show_property(struct device *dev,
 		return sprintf(buf, "%s\n", type_text[value.intval]);
 	else if (off == POWER_SUPPLY_PROP_SCOPE)
 		return sprintf(buf, "%s\n", scope_text[value.intval]);
+	else if (off == POWER_SUPPLY_PROP_REAL_BATT_PRESENT)
+		return sprintf(buf, "%d\n", value.intval);
 #ifdef CONFIG_LGE_PM
 	else if (off >= POWER_SUPPLY_PROP_MODEL_NAME && off <= POWER_SUPPLY_PROP_SERIAL_NUMBER)
 		return sprintf(buf, "%s\n", value.strval);
@@ -136,6 +130,32 @@ static ssize_t power_supply_show_property(struct device *dev,
 	else if (off >= POWER_SUPPLY_PROP_MODEL_NAME)
 		return sprintf(buf, "%s\n", value.strval);
 #endif
+#if defined(CONFIG_MACH_APQ8064_AWIFI) || defined(CONFIG_MACH_APQ8064_ALTEV)
+	else if (off >= POWER_SUPPLY_PROP_VCHG)
+		return sprintf(buf, "%d\n", value.intval);
+	else if (off >= POWER_SUPPLY_PROP_IUSB)
+		return sprintf(buf, "%d\n", value.intval);
+#endif
+#ifdef CONFIG_MACH_APQ8064_ALTEV
+	else if (off >= POWER_SUPPLY_PROP_BATT_TEMP_ADC)
+		return sprintf(buf, "%d\n", value.intval);
+	else if (off >= POWER_SUPPLY_PROP_ORIG_CAPACITY)
+		return sprintf(buf, "%d\n", value.intval);
+	else if (off == POWER_SUPPLY_PROP_CABLE_INFO_ADC)
+		return sprintf(buf, "%d\n", value.intval);
+	else if (off == POWER_SUPPLY_PROP_REV_ADC)
+		return sprintf(buf, "%d\n", value.intval);
+    else if (off == POWER_SUPPLY_PROP_PA_THERM_VAL)
+        return sprintf(buf, "%d\n", value.intval);
+    else if (off == POWER_SUPPLY_PROP_PA_THERM_ADC)
+        return sprintf(buf, "%d\n", value.intval);
+    else if (off == POWER_SUPPLY_PROP_GET_SET_CUR)
+        return sprintf(buf, "%d\n", value.intval);
+    else if (off == POWER_SUPPLY_PROP_VZW_CHG_STATE)
+	return sprintf(buf, "%d\n", value.intval);
+
+#endif
+
 	return sprintf(buf, "%d\n", value.intval);
 }
 
@@ -164,59 +184,6 @@ static ssize_t power_supply_store_property(struct device *dev,
 
 /* [START] sungsookim */
 #ifdef CONFIG_LGE_PM
-/* LGE_S kwangjae1.lee@lge.com 2012-06-11 Add bms debugger */
-static ssize_t bms_batt_show_property(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-
-	ssize_t ret;
-	struct power_supply *psy = dev_get_drvdata(dev);
-	const ptrdiff_t off = attr - power_supply_attrs;
-	union power_supply_propval value;
-	static char *bms_mode[] = {
-		"NORMAL", "BMSLOG",
-	};
-
-	ret = psy->get_property(psy, off, &value);
-
-	if (ret < 0) {
-		if (ret != -ENODEV)
-			dev_err(dev, "driver failed to report `%s' property\n",
-					attr->attr.name);
-		return ret;
-	}
-
-	if (off == POWER_SUPPLY_PROP_BMS_BATT)
-		return sprintf(buf, "[%s] \nusage: echo [mode] > bms_log\n", bms_mode[value.intval]);
-
-	return 0;
-}
-extern int bms_batt_set(struct bms_batt_info_type*);
-static ssize_t bms_batt_store_property(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t count)
-{
-	struct bms_batt_info_type bms_log;
-	int ret = -EINVAL;
-
-	if(sscanf(buf, "%d", &bms_log.mode) != 1)
-	{
-			if(bms_log.mode == 1) //bmslog mode
-		{
-			printk(KERN_ERR "usage : echo [mode] > bms_log");
-			goto out;
-		}
-	}
-
-	bms_batt_set(&bms_log);
-	ret = count;
-
-out:
-	return ret;
-
-}
-/* LGE_E kwangjae1.lee@lge.com 2012-06-11 Add bms debugger */
 
 static ssize_t pseudo_batt_show_property(struct device *dev,
 		struct device_attribute *attr,
@@ -244,8 +211,11 @@ static ssize_t pseudo_batt_show_property(struct device *dev,
 
 	return 0;
 }
-
+#ifdef CONFIG_MACH_APQ8064_ALTEV
+extern int pseudo_batt_set_new(struct pseudo_batt_info_type*);
+#else
 extern int pseudo_batt_set(struct pseudo_batt_info_type*);
+#endif
 
 static ssize_t pseudo_batt_store_property(struct device *dev,
 		struct device_attribute *attr,
@@ -263,7 +233,11 @@ static ssize_t pseudo_batt_store_property(struct device *dev,
 			goto out;
 		}
 	}
+#ifdef CONFIG_MACH_APQ8064_ALTEV
+	pseudo_batt_set_new(&info);
+#else
 	pseudo_batt_set(&info);
+#endif
 	ret = count;
 out:
 	return ret;
@@ -331,13 +305,7 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(voltage_min),
 	POWER_SUPPLY_ATTR(voltage_max_design),
 	POWER_SUPPLY_ATTR(voltage_min_design),
-/* BEGIN: kidong0420.kim@lge.com 2011-10-17 display the battery voltage as mV unit */
-	#ifdef CONFIG_MACH_LGE
-	POWER_SUPPLY_ATTR(batt_vol),
-	#else/*QCT_ORG*/
 	POWER_SUPPLY_ATTR(voltage_now),
-	#endif/*CONFIG_MACH_LGE */
-/* END: kidong0420.kim@lge.com 2011-10-17 */
 	POWER_SUPPLY_ATTR(voltage_avg),
 	POWER_SUPPLY_ATTR(current_max),
 	POWER_SUPPLY_ATTR(current_now),
@@ -371,32 +339,38 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(model_name),
 	POWER_SUPPLY_ATTR(manufacturer),
 	POWER_SUPPLY_ATTR(serial_number),
+/* [START] sungsookim */
+#ifdef CONFIG_LGE_PM
 #ifdef CONFIG_LGE_PM_BATTERY_ID_CHECKER
 	POWER_SUPPLY_ATTR(valid_batt_id),
 #endif
-/* [START] sungsookim */
-#ifdef CONFIG_LGE_PM
 	PSEUDO_BATT_ATTR(pseudo_batt),
 	BLOCK_CHARGING_ATTR(block_charging),
 	POWER_SUPPLY_ATTR(ext_pwr),
-/* LGE_S kwangjae1.lee@lge.com 2012-06-11 Add bms debugger */
-	BMS_BATT_ATTR(bms_log),
-/* LGE_E kwangjae1.lee@lge.com 2012-06-11 Add bms debugger */
-
 /*2012-07-11 Add battery present check in the testmode */
 	POWER_SUPPLY_ATTR(real_present),
 /*2012-07-11 Add battery present check in the testmode */
 #ifdef CONFIG_BATTERY_MAX17047
-/*doosan.baek@lge.com 20121108 Add battery condition */
+/*                                                   */
 	POWER_SUPPLY_ATTR(battery_condition),
 	POWER_SUPPLY_ATTR(battery_age),
 #endif
 #endif
-/* [END] */
-#ifdef CONFIG_LGE_FTT_CHARGER
-	POWER_SUPPLY_ATTR(ftt_anntena_level),
+#if defined(CONFIG_MACH_APQ8064_AWIFI) || defined(CONFIG_MACH_APQ8064_ALTEV)
+	POWER_SUPPLY_ATTR(usb_in_voltage),
+	POWER_SUPPLY_ATTR(usb_in_ampere),
 #endif
-
+#ifdef CONFIG_MACH_APQ8064_ALTEV
+	POWER_SUPPLY_ATTR(batt_temp_adc),
+	POWER_SUPPLY_ATTR(orig_capacity),
+	POWER_SUPPLY_ATTR(cable_adc),
+	POWER_SUPPLY_ATTR(rev_adc),
+	POWER_SUPPLY_ATTR(pa_therm_val),
+	POWER_SUPPLY_ATTR(pa_therm_adc),
+	POWER_SUPPLY_ATTR(get_set_cur),
+	POWER_SUPPLY_ATTR(vzw_chg),
+#endif
+/* [END] */
 };
 
 static struct attribute *

@@ -321,7 +321,6 @@ struct _mmc_csd {
 #define EXT_CSD_PWR_CL_200_360		237	/* RO */
 #define EXT_CSD_PWR_CL_DDR_52_195	238	/* RO */
 #define EXT_CSD_PWR_CL_DDR_52_360	239	/* RO */
-#define EXT_CSD_CORRECTLY_PRG_SECTORS_NUM 242	/* RO, 4 bytes */
 #define EXT_CSD_BKOPS_STATUS		246	/* RO */
 #define EXT_CSD_POWER_OFF_LONG_TIME	247	/* RO */
 #define EXT_CSD_GENERIC_CMD6_TIME	248	/* RO */
@@ -346,6 +345,7 @@ struct _mmc_csd {
 
 #define EXT_CSD_PART_CONFIG_ACC_MASK	(0x7)
 #define EXT_CSD_PART_CONFIG_ACC_BOOT0	(0x1)
+#define EXT_CSD_PART_CONFIG_ACC_BOOT1	(0x2)
 #define EXT_CSD_PART_CONFIG_ACC_GP0	(0x4)
 
 #define EXT_CSD_PART_SUPPORT_PART_EN	(0x1)
@@ -377,6 +377,14 @@ struct _mmc_csd {
 #define EXT_CSD_SEC_BD_BLK_EN	BIT(2)
 #define EXT_CSD_SEC_GB_CL_EN	BIT(4)
 #define EXT_CSD_SEC_SANITIZE	BIT(6)  /* v4.5 only */
+
+#define EXT_CSD_RST_N_EN_MASK	0x3
+#define EXT_CSD_RST_N_ENABLED	1	/* RST_n is enabled on card */
+
+#define EXT_CSD_NO_POWER_NOTIFICATION	0
+#define EXT_CSD_POWER_ON		1
+#define EXT_CSD_POWER_OFF_SHORT		2
+#define EXT_CSD_POWER_OFF_LONG		3
 
 #define EXT_CSD_RST_N_EN_MASK	0x3
 #define EXT_CSD_RST_N_ENABLED	1	/* RST_n is enabled on card */

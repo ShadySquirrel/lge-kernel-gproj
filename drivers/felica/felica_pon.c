@@ -43,7 +43,7 @@ static int felica_pon_open (struct inode *inode, struct file *fp)
 
   if(1 == isopen)
   {
-    #ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_PON] felica_pon_open - already open \n");
     #endif
     return -1;
@@ -91,50 +91,66 @@ static ssize_t felica_pon_write(struct file *fp, const char *buf, size_t count, 
 
   //FELICA_DEBUG_MSG("[FELICA_PON] felica_pon_write current_uid : %d \n",current_uid());
 
-/* Check error */
-  if(NULL == fp)
-  {
-    FELICA_DEBUG_MSG("[FELICA_PON] ERROR file \n");
-    return -1;
-  }
-
-  if(NULL == buf)
-  {
-    FELICA_DEBUG_MSG("[FELICA_PON] ERROR buf \n");
-    return -1;
-  }
-
-  if(1 != count)
-  {
-    FELICA_DEBUG_MSG("[FELICA_PON]ERROR count \n");
-    return -1;
-  }
-
-  if(NULL == pos)
-  {
-    FELICA_DEBUG_MSG("[FELICA_PON] ERROR file \n");
-    return -1;
-  }
+  /* Check error */
+	if(NULL == fp)
+	{
+    #ifdef FEATURE_DEBUG_HIGH
+	  FELICA_DEBUG_MSG("[FELICA_PON] ERROR fp is NULL \n");
+	#endif
+	  return -1;
+	}
+  
+	if(NULL == buf)
+	{
+    #ifdef FEATURE_DEBUG_HIGH
+	  FELICA_DEBUG_MSG("[FELICA_PON] ERROR buf is NULL \n");
+	#endif
+	  return -1;
+	}
+  
+	if(1 != count)
+	{
+    #ifdef FEATURE_DEBUG_HIGH
+	  FELICA_DEBUG_MSG("[FELICA_PON] ERROR count(%d) \n",count);
+	#endif
+	  return -1;
+	}
+  
+	if(NULL == pos)
+	{
+    #ifdef FEATURE_DEBUG_HIGH
+	  FELICA_DEBUG_MSG("[FELICA_PON] ERROR pos is NULL \n");
+	#endif
+	  return -1;
+	}
 
   rc = copy_from_user(&SetValue, (void*)buf, count);
   if(rc)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_PON] ERROR - copy_from_user \n");
+	#endif
     return rc;
   }
 
   if((GPIO_LOW_VALUE != SetValue)&&(GPIO_HIGH_VALUE != SetValue))
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_PON] ERROR - SetValue is out of range \n");
+	#endif
     return -1;
   }
   else if(GPIO_LOW_VALUE != SetValue)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_PON] ========> ON \n");
+	#endif
   }
   else if(GPIO_HIGH_VALUE != SetValue)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_PON] <======== OFF \n");
+	#endif
   }
 
   felica_gpio_write(GPIO_FELICA_PON, SetValue);
@@ -172,7 +188,7 @@ static int felica_pon_release (struct inode *inode, struct file *fp)
 {
   if(0 == isopen)
   {
-    #ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_PON] felica_pon_release - not open \n");
     #endif
 
@@ -191,7 +207,6 @@ static int felica_pon_release (struct inode *inode, struct file *fp)
   felica_uart_close();
 #endif
 
-  FELICA_DEBUG_MSG("[FELICA_PON] felica_pon_release  <======== OFF \n");
   felica_gpio_write(GPIO_FELICA_PON, GPIO_LOW_VALUE);
 
   #ifdef FEATURE_DEBUG_LOW
@@ -238,7 +253,9 @@ static int felica_pon_init(void)
   rc = misc_register(&felica_pon_device);
   if (rc)
   {
-    FELICA_DEBUG_MSG("[FELICA_PON] FAIL!! can not register felica_pon \n");
+    #ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA_PON] ERROR can not register felica_pon \n");
+	#endif
     return rc;
   }
 

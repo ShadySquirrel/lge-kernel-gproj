@@ -956,7 +956,7 @@ void free_initmem(void)
 				    __phys_to_pfn(__pa(__init_end)),
 				    "init");
 	totalram_pages += reclaimed_initmem;
-
+#else
 	poison_init_mem(__init_begin, __init_end - __init_begin);
 	if (!machine_is_integrator() && !machine_is_cintegrator()) {
 		reclaimed_initmem = free_area(__phys_to_pfn(__pa(__init_begin)),

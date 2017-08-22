@@ -13,10 +13,10 @@
 #include <linux/linkage.h>
 #include <linux/init.h>
 #include <asm/assembler.h>
+#include <asm/errno.h>
 #include <asm/unwind.h>
 
 #include "proc-macros.S"
-
 
 /*
  *	v7_flush_icache_all()

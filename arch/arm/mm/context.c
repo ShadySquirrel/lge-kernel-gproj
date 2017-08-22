@@ -17,12 +17,12 @@
 #include <linux/percpu.h>
 
 #include <asm/mmu_context.h>
+#include <asm/smp_plat.h>
 #include <asm/thread_notify.h>
 #include <asm/tlbflush.h>
 
 #include <mach/msm_rtb.h>
 
-#ifdef CONFIG_SMP
 /*
  * On ARMv6, we have the following structure in the Context ID:
  *
@@ -40,25 +40,25 @@
  * In big endian operation, the two 32 bit words are swapped if accesed by
  * non 64-bit operations.
  */
-#endif
+#define ASID_FIRST_VERSION	(1ULL << ASID_BITS)
+#define NUM_USER_ASIDS		ASID_FIRST_VERSION
 
-#ifdef CONFIG_ARM_LPAE
 static DEFINE_RAW_SPINLOCK(cpu_asid_lock);
 static atomic64_t asid_generation = ATOMIC64_INIT(ASID_FIRST_VERSION);
 static DECLARE_BITMAP(asid_map, NUM_USER_ASIDS);
-#define cpu_set_asid(asid) {						\
+
 static DEFINE_PER_CPU(atomic64_t, active_asids);
 static DEFINE_PER_CPU(u64, reserved_asids);
 static cpumask_t tlb_flush_pending;
-#else
-#define cpu_set_asid(asid) \
+
+#ifdef CONFIG_ARM_ERRATA_798181
 void a15_erratum_get_cpumask(int this_cpu, struct mm_struct *mm,
 			     cpumask_t *mask)
 {
 	int cpu;
 	unsigned long flags;
 	u64 context_id, asid;
-#endif
+
 	raw_spin_lock_irqsave(&cpu_asid_lock, flags);
 	context_id = mm->context.id.counter;
 	for_each_online_cpu(cpu) {
@@ -76,7 +76,7 @@ void a15_erratum_get_cpumask(int this_cpu, struct mm_struct *mm,
 	}
 	raw_spin_unlock_irqrestore(&cpu_asid_lock, flags);
 }
-
+#endif
 
 #ifdef CONFIG_ARM_LPAE
 static void cpu_set_reserved_ttbr0(void)
@@ -94,7 +94,7 @@ static void cpu_set_reserved_ttbr0(void)
 	: "r" (ttbl), "r" (ttbh));
 	isb();
 }
-
+#else
 static void cpu_set_reserved_ttbr0(void)
 {
 	u32 ttb;
@@ -105,7 +105,7 @@ static void cpu_set_reserved_ttbr0(void)
 	: "=r" (ttb));
 	isb();
 }
-
+#endif
 
 #ifdef CONFIG_PID_IN_CONTEXTIDR
 static int contextidr_notifier(struct notifier_block *unused, unsigned long cmd,
@@ -141,13 +141,13 @@ static int __init contextidr_notifier_init(void)
 	return thread_register_notifier(&contextidr_notifier_block);
 }
 arch_initcall(contextidr_notifier_init);
+#endif
 
-#else
 static void flush_context(unsigned int cpu)
 {
 	int i;
 	u64 asid;
-#endif
+
 	/* Update the list of reserved ASIDs and the ASID bitmap. */
 	bitmap_clear(asid_map, 0, NUM_USER_ASIDS);
 	for_each_possible_cpu(i) {
@@ -243,13 +243,13 @@ void check_and_switch_context(struct mm_struct *mm, struct task_struct *tsk)
 		goto switch_mm_fastpath;
 
 	raw_spin_lock_irqsave(&cpu_asid_lock, flags);
-	/* set the new ASID */
+	/* Check that our ASID belongs to the current generation. */
 	asid = atomic64_read(&mm->context.id);
 	if ((asid ^ atomic64_read(&asid_generation)) >> ASID_BITS) {
 		asid = new_context(mm, cpu);
 		atomic64_set(&mm->context.id, asid);
 	}
-#endif
+
 	if (cpumask_test_and_clear_cpu(cpu, &tlb_flush_pending)) {
 		local_flush_bp_all();
 		local_flush_tlb_all();

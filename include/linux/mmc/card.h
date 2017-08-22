@@ -23,7 +23,6 @@ struct mmc_cid {
 	unsigned char		hwrev;
 	unsigned char		fwrev;
 	unsigned char		month;
-	unsigned int		prv;
 };
 
 struct mmc_csd {
@@ -129,17 +128,17 @@ struct sd_switch_caps {
 	unsigned int		hs_max_dtr;
 	unsigned int		uhs_max_dtr;
 #define HIGH_SPEED_MAX_DTR	50000000
-#ifdef CONFIG_MACH_APQ8064_GV_KR
-#define UHS_SDR104_MAX_DTR	208000000
-#else
+#ifdef CONFIG_MACH_LGE
 #define UHS_SDR104_MAX_DTR	100000000
-#endif
-#define UHS_SDR50_MAX_DTR	100000000
-#ifdef CONFIG_MACH_APQ8064_GK_KR
-#define UHS_DDR50_MAX_DTR	42000000
 #else
+#define UHS_SDR104_MAX_DTR	208000000
+#endif 
+#define UHS_SDR50_MAX_DTR	100000000
+#if defined(CONFIG_MACH_APQ8064_GK_KR) || defined(CONFIG_MACH_APQ8064_OMEGAR_KR) || defined(CONFIG_MACH_APQ8064_OMEGA_KR)
+#define UHS_DDR50_MAX_DTR	42000000
+#else 
 #define UHS_DDR50_MAX_DTR	50000000
-#endif
+#endif 
 #define UHS_SDR25_MAX_DTR	UHS_DDR50_MAX_DTR
 #define UHS_SDR12_MAX_DTR	25000000
 	unsigned int		sd3_bus_mode;
@@ -194,7 +193,6 @@ struct sdio_cis {
 struct mmc_host;
 struct sdio_func;
 struct sdio_func_tuple;
-struct mmc_queue;
 
 #define SDIO_MAX_FUNCS		7
 
@@ -207,22 +205,7 @@ enum mmc_packed_stop_reasons {
 	REL_WRITE,
 	THRESHOLD,
 	LARGE_SEC_ALIGN,
-	RANDOM,
 	MAX_REASONS,
-};
-
-enum mmc_blk_status {
-	MMC_BLK_SUCCESS = 0,
-	MMC_BLK_PARTIAL,
-	MMC_BLK_CMD_ERR,
-	MMC_BLK_RETRY,
-	MMC_BLK_ABORT,
-	MMC_BLK_DATA_ERR,
-	MMC_BLK_ECC_ERR,
-	MMC_BLK_NOMEDIUM,
-	MMC_BLK_NEW_REQUEST,
-	MMC_BLK_URGENT,
-	MMC_BLK_URGENT_DONE,
 };
 
 struct mmc_wr_pack_stats {
@@ -598,5 +581,5 @@ extern void mmc_fixup_device(struct mmc_card *card,
 extern struct mmc_wr_pack_stats *mmc_blk_get_packed_statistics(
 			struct mmc_card *card);
 extern void mmc_blk_init_packed_statistics(struct mmc_card *card);
-extern void mmc_blk_disable_wr_packing(struct mmc_queue *mq);
+
 #endif /* LINUX_MMC_CARD_H */

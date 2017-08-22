@@ -12,10 +12,10 @@
 #include "felica_uart.h"
 
 #include "felica_test.h"
+
 /*
  *  DEFINE
  */
-#define RXTX_LOG_ENABLE
 
 enum{
 UART_STATUS_NOT_OPEN= 0,
@@ -61,7 +61,9 @@ static int felica_open (struct inode *inode, struct file *fp)
   /* Check input parameters */
   if(NULL == fp)
   {
-    FELICA_DEBUG_MSG("[FELICA] ERROR - fp \n");
+    #ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA] ERROR - fp is NULL \n");
+	#endif
     return -1;
   }
 
@@ -74,7 +76,7 @@ static int felica_open (struct inode *inode, struct file *fp)
   }
   else if(UART_STATUS_RX == uart_status)
   {
-    #ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA] /dev/felica RX is already openned. \n");
     #endif
 
@@ -84,7 +86,7 @@ static int felica_open (struct inode *inode, struct file *fp)
   }
   else
   {
-    #ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA] /dev/felica RX/TX are already openned. \n");
     #endif
 
@@ -136,25 +138,33 @@ static ssize_t felica_read(struct file *fp, char *buf, size_t count, loff_t *pos
   /* Check input parameters */
   if(NULL == fp)
   {
-    FELICA_DEBUG_MSG("[FELICA] ERROR - fp \n");
+    #ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA] ERROR - fp is NULL \n");
+	#endif
     return -1;
   }
 
   if(NULL == buf)
   {
-    FELICA_DEBUG_MSG("[FELICA] ERROR - buf \n");
+    #ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA] ERROR - buf is NULL \n");
+	#endif
     return -1;
   }
 
   if(count > RECEIVE_BUFFER_MAX_SIZE)
   {
-    FELICA_DEBUG_MSG("[FELICA] ERROR - count \n");
+    #ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA] ERROR - count(%d) \n",count);
+	#endif
     return -1;
   }
 
   if(NULL == pos)
   {
-    FELICA_DEBUG_MSG("[FELICA] ERROR - pos \n");
+    #ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA] ERROR - pos is NULL \n");
+	#endif
     return -1;
   }
 
@@ -208,7 +218,9 @@ static ssize_t felica_read(struct file *fp, char *buf, size_t count, loff_t *pos
 
   if(0 >= readcount)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA] ERROR - No data in data buffer \n");
+	#endif
     return 0;
   }
 
@@ -237,13 +249,15 @@ static ssize_t felica_read(struct file *fp, char *buf, size_t count, loff_t *pos
     ptr = receive_buf;
     if(NULL != ptr)
     {
-      FELICA_DEBUG_MSG("===== READ FELICA LOW DATA =====\n");
+      FELICA_DEBUG_MSG("===== READ FELICA RESPONSE ===== \n");
+	  FELICA_DEBUG_MSG("FELICA - ");
       for(i=0; i<count; i++)
       {
         FELICA_DEBUG_MSG(" %02x", *ptr++);
         if(0 == (i+1)%10)
         {
           FELICA_DEBUG_MSG("\n");
+		  FELICA_DEBUG_MSG("FELICA - ");
         }
       }
       FELICA_DEBUG_MSG("\n");
@@ -254,7 +268,9 @@ static ssize_t felica_read(struct file *fp, char *buf, size_t count, loff_t *pos
   rc = copy_to_user(buf, receive_buf, count);
 
   if (rc) {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA] ERROR - copy_to_user \n");
+	#endif
     return rc;
   }
 
@@ -293,19 +309,25 @@ static ssize_t felica_write(struct file *fp, const char *buf, size_t count, loff
   /* Check input parameters */
   if(NULL == fp)
   {
-    FELICA_DEBUG_MSG("[FELICA] ERROR - fp \n");
+    #ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA] ERROR - fp is NULL \n");
+	#endif
     return -1;
   }
 
   if(NULL == buf)
   {
-    FELICA_DEBUG_MSG("[FELICA] ERROR - buf \n");
+    #ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA] ERROR - buf is NULL \n");
+	#endif
     return -1;
   }
 
   if(count > TRANSMIT_BUFFER_MAX_SIZE)
   {
-    FELICA_DEBUG_MSG("[FELICA] ERROR - count \n");
+    #ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA] ERROR - count(%d) \n",count);
+	#endif
     return -1;
   }
 
@@ -315,7 +337,9 @@ static ssize_t felica_write(struct file *fp, const char *buf, size_t count, loff
   /* Copy user memory to kernel memory */
   rc = copy_from_user(transmit_buf, buf, count);
   if (rc) {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA] ERROR - copy_to_user \n");
+	#endif
     return rc;
   }
 
@@ -329,7 +353,7 @@ static ssize_t felica_write(struct file *fp, const char *buf, size_t count, loff
 
     if(NULL != ptr)
     {
-      FELICA_DEBUG_MSG("===== WRITE FELICA LOW DATA =====\n");
+      FELICA_DEBUG_MSG("===== WRITE FELICA COMMAND =====\n");
       for(i=0; i<count; i++)
       {
         FELICA_DEBUG_MSG(" %02x", *ptr++);
@@ -364,12 +388,13 @@ static ssize_t felica_write(struct file *fp, const char *buf, size_t count, loff
 
   //mdelay(50);
 
-  #ifdef FEATURE_DEBUG_LOW
+  #ifdef FEATURE_DEBUG_MED
   FELICA_DEBUG_MSG("[FELICA] writecount : %d \n",writecount);
   #endif
 
 #ifdef FELICA_FN_DEVICE_TEST
   FELICA_DEBUG_MSG("[FELICA] felica_write - result_write_uart(%d) \n",result_write_uart);
+
   if(result_write_uart != -1) {
     if (writecount == 0)
       result_write_uart = -1;
@@ -394,7 +419,9 @@ static int felica_release (struct inode *inode, struct file *fp)
   /* Check input parameters */
   if(NULL == fp)
   {
-    FELICA_DEBUG_MSG("[FELICA] ERROR - fp \n");
+    #ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA] ERROR - fp is NULL \n");
+	#endif
     return -1;
   }
   /* FileInputStream and FileOutPutStream close felica
@@ -402,7 +429,7 @@ static int felica_release (struct inode *inode, struct file *fp)
 
   if(UART_STATUS_RX_TX == uart_status)
   {
-    #ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA] /dev/felica RX is closed. \n");
     #endif
 
@@ -412,7 +439,7 @@ static int felica_release (struct inode *inode, struct file *fp)
   }
   else if(UART_STATUS_RX == uart_status)
   {
-    #ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA] /dev/felica TX is closed. \n");
     #endif
 
@@ -420,7 +447,7 @@ static int felica_release (struct inode *inode, struct file *fp)
   }
   else
   {
-    #ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA] /dev/felica RX/TX are already closed. \n");
     #endif
 
@@ -437,7 +464,9 @@ static int felica_release (struct inode *inode, struct file *fp)
 
   if(rc)
   {
+	#ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA] ERROR - open_hs_uart \n");
+	#endif
     return rc;
   }
 
@@ -471,25 +500,33 @@ static long felica_ioctl (struct file *fp, unsigned int cmd, unsigned long arg)
   /* Check input parameters */
   if(NULL == fp)
   {
-    FELICA_DEBUG_MSG("[FELICA] ERROR - fp \n");
+    #ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA] ERROR - fp is NULL \n");
+	#endif
     return -1;
   }
 
   if(IOCTL_FELICA_MAGIC != _IOC_TYPE(cmd))
   {
-    FELICA_DEBUG_MSG("[FELICA] ERROR - IO cmd type \n");
+	#ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA] ERROR - IO cmd type(%d) \n",_IOC_TYPE(cmd));
+	#endif
     return -1;
   }
 
   if(IOCTL_FELICA_CMD_AVAILABLE != _IOC_NR(cmd))
   {
-    FELICA_DEBUG_MSG("[FELICA] ERROR - IO cmd number \n");
+  	#ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA] ERROR - IO cmd number(%d) \n",_IOC_NR(cmd));
+	#endif
     return -1;
   }
 
   if(0 != _IOC_SIZE(cmd))
   {
-    FELICA_DEBUG_MSG("[FELICA] ERROR - IO cmd size \n");
+  	#ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA] ERROR - IO cmd size(%d) \n",_IOC_SIZE(cmd));
+	#endif
     return -1;
   }
 
@@ -498,7 +535,9 @@ static long felica_ioctl (struct file *fp, unsigned int cmd, unsigned long arg)
   mutex_unlock(&felica_mutex);
 
   if (rc) {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA] ERROR - felica_uart_ioctrl \n");
+	#endif
     return rc;
   }
 
@@ -507,7 +546,9 @@ static long felica_ioctl (struct file *fp, unsigned int cmd, unsigned long arg)
   rc = copy_to_user(uarg, &numofreceiveddata, sizeof(int));
   if(rc)
   {
+  	#ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA] ERROR - open_hs_uart \n");
+	#endif
     return rc;
   }
 
@@ -529,7 +570,9 @@ static long felica_ioctl (struct file *fp, unsigned int cmd, unsigned long arg)
 */
 static int felica_fsync(struct file *fp, loff_t param1, loff_t param2, int datasync)
 {
-   FELICA_DEBUG_MSG("[FELICA] felica_fsync\n");
+  #ifdef FEATURE_DEBUG_LOW
+  FELICA_DEBUG_MSG("[FELICA] felica_fsync \n");
+  #endif
 
   // TODO: TRANSMIT DATA TO FELICA CHIP
 
@@ -570,7 +613,9 @@ static int felica_init(void)
   rc = misc_register(&felica_device);
   if(rc)
   {
-    FELICA_DEBUG_MSG("[FELICA] felica init : error : can not register : %d\n", rc);
+    #ifdef FEATURE_DEBUG_HIGH
+    FELICA_DEBUG_MSG("[FELICA] ERROR - felica_init can not register(%d)\n", rc);
+	#endif
     return rc;
   }
 

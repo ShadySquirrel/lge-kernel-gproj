@@ -37,39 +37,20 @@ enum{
   GPIO_CONFIG_ENABLE = 0,
   GPIO_CONFIG_DISABLE,
 };
-#if defined(CONFIG_LGE_FELICA_ONLY)
+
 /* felica_pon */
 #define GPIO_FELICA_PON   37
 
 /* felica_rfs */
-#define GPIO_FELICA_RFS   55
-
-/* felica_int */
-#define GPIO_FELICA_INT   22
-
-/* felica_lockcont */
-#define GPIO_FELICA_LOCKCONT   29
-#else
-/* felica_pon */
-#define GPIO_FELICA_PON   37
-
-/* felica_rfs */
-#define GPIO_FELICA_RFS_REV_B   55 // Rev C -> 84
-
-/* felica_rfs */
-#define GPIO_FELICA_RFS   84
-
-/* felica_int */
-#define GPIO_FELICA_INT_REV_B   22 // Rev C -> 38
+#define GPIO_FELICA_RFS   29
 
 /* felica_int */
 #define GPIO_FELICA_INT   38
 
-/* felica_lockcont */
-#define GPIO_FELICA_LOCKCONT   29
+#define GPIO_FELICA_LOCKCONT   62
 
-#define GPIO_NFC_HSEL   57
-#endif
+#define GPIO_NFC_HSEL   69
+
 /*
  *  FUNCTION PROTOTYPE
  */

@@ -27,13 +27,27 @@ obj-$(CONFIG_MACH_APQ8064_GKSK) += gk/
 obj-$(CONFIG_MACH_APQ8064_GKKT) += gk/
 obj-$(CONFIG_MACH_APQ8064_GKATT) += gk/
 obj-$(CONFIG_MACH_APQ8064_GKGLOBAL) += gk/
+obj-$(CONFIG_MACH_APQ8064_OMEGAR) += omegar/
+obj-$(CONFIG_MACH_APQ8064_OMEGA) += omega/
 
 # GV
 obj-$(CONFIG_MACH_APQ8064_GVDCM) += gv/
 obj-$(CONFIG_MACH_APQ8064_GVKDDI) += gv/
 
+ifndef CONFIG_MACH_APQ8064_L05E
 # COMMON
 obj-y += common/
+endif
 
 # GVKR
 obj-$(CONFIG_MACH_APQ8064_GVKT) += gvkr/
+
+
+#L05E
+obj-$(CONFIG_MACH_APQ8064_L05E) += L05E/
+
+#AWIFI
+obj-$(CONFIG_MACH_APQ8064_AWIFI) += awifi/
+
+#ALTEV
+obj-$(CONFIG_MACH_APQ8064_ALTEV) += awifi/

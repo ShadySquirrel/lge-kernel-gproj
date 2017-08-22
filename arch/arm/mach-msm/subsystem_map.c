@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -256,6 +256,8 @@ phys_addr_t msm_subsystem_check_iova_mapping(int subsys_id, unsigned long iova)
 
 	subsys_domain = msm_get_iommu_domain(msm_subsystem_get_domain_no
 								(subsys_id));
+	if (!subsys_domain)
+		return -EINVAL;
 
 	return iommu_iova_to_phys(subsys_domain, iova);
 }
@@ -512,6 +514,9 @@ int msm_subsystem_unmap_buffer(struct msm_mapped_buffer *buf)
 				subsys_domain = msm_get_iommu_domain(
 						msm_subsystem_get_domain_no(
 						node->subsystems[i]));
+
+				if (!subsys_domain)
+					continue;
 
 				domain_no = msm_subsystem_get_domain_no(
 							node->subsystems[i]);
