@@ -10,6 +10,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/cpu.h>
 #include <linux/module.h>
 #include <linux/highmem.h>
 #include <linux/interrupt.h>
@@ -17,7 +18,6 @@
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
 #include "mm.h"
-
 
 void *kmap(struct page *page)
 {

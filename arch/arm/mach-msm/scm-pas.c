@@ -16,6 +16,7 @@
 #include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/clk.h>
+#include <linux/dma-mapping.h>
 
 #include <mach/scm.h>
 #include <mach/socinfo.h>
@@ -27,7 +28,6 @@
 #define PAS_AUTH_AND_RESET_CMD	5
 #define PAS_SHUTDOWN_CMD	6
 #define PAS_IS_SUPPORTED_CMD	7
-
 
 int pas_init_image(enum pas_id id, const u8 *metadata, size_t size)
 {

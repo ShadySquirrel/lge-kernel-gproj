@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 2002 ARM Ltd.
  *  All Rights Reserved
- *  Copyright (c) 2010-2012, Code Aurora Forum. All rights reserved.
+ *  Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -103,7 +103,7 @@ static int __cpuinit krait_release_secondary_sim(unsigned long base, int cpu)
 	if (!base_ptr)
 		return -ENODEV;
 
-	if (machine_is_msm8974_sim() || machine_is_mpq8092_sim()) {
+	if (machine_is_msm8974_sim()) {
 		writel_relaxed(0x800, base_ptr+0x04);
 		writel_relaxed(0x3FFF, base_ptr+0x14);
 	}
@@ -176,7 +176,7 @@ static int __cpuinit release_secondary(unsigned int cpu)
 	if (cpu_is_msm8x60())
 		return scorpion_release_secondary();
 
-	if (machine_is_msm8974_sim() || machine_is_mpq8092_sim())
+	if (machine_is_msm8974_sim())
 		return krait_release_secondary_sim(0xf9088000, cpu);
 
 	if (soc_class_is_msm8960() || soc_class_is_msm8930() ||

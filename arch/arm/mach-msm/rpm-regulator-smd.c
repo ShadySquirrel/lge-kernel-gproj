@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1091,14 +1091,16 @@ static int __devexit rpm_vreg_device_remove(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct rpm_regulator *reg;
+	struct rpm_vreg *rpm_vreg;
 
 	reg = platform_get_drvdata(pdev);
 	if (reg) {
-		rpm_vreg_lock(reg->rpm_vreg);
+		rpm_vreg = reg->rpm_vreg;
+		rpm_vreg_lock(rpm_vreg);
 		regulator_unregister(reg->rdev);
 		list_del(&reg->list);
 		kfree(reg);
-		rpm_vreg_unlock(reg->rpm_vreg);
+		rpm_vreg_unlock(rpm_vreg);
 	} else {
 		dev_err(dev, "%s: drvdata missing\n", __func__);
 		return -EINVAL;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2012, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2009-2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -26,7 +26,6 @@
 
 extern int g_speed_bin;
 extern int g_pvs_bin;
-
 enum {
 	HW_PLATFORM_UNKNOWN = 0,
 	HW_PLATFORM_SURF    = 1,
@@ -38,6 +37,7 @@ enum {
 	HW_PLATFORM_LIQUID  = 9,
 	/* Dragonboard platform id is assigned as 10 in CDT */
 	HW_PLATFORM_DRAGON	= 10,
+	HW_PLATFORM_QRD	= 11,
 	HW_PLATFORM_INVALID
 };
 
@@ -50,7 +50,8 @@ const char *hw_platform[] = {
 	[HW_PLATFORM_SVLTE_SURF] = "SLVTE_SURF",
 	[HW_PLATFORM_MTP] = "MTP",
 	[HW_PLATFORM_LIQUID] = "Liquid",
-	[HW_PLATFORM_DRAGON] = "Dragon"
+	[HW_PLATFORM_DRAGON] = "Dragon",
+	[HW_PLATFORM_QRD] = "QRD",
 };
 
 enum {
@@ -259,7 +260,6 @@ static enum msm_cpu cpu_of_id[] = {
 	[127] = MSM_CPU_8625,
 	[128] = MSM_CPU_8625,
 	[129] = MSM_CPU_8625,
-	[137] = MSM_CPU_8625,
 
 	/* 8064 MPQ ID */
 	[130] = MSM_CPU_8064,
@@ -318,7 +318,7 @@ static struct socinfo_v1 dummy_socinfo = {
 };
 
 #if defined (CONFIG_LGE_PM)
-#if defined(CONFIG_MACH_APQ8064_GK_KR) || defined(CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GV_KR) || defined(CONFIG_MACH_APQ8064_GKGLOBAL)
+#if defined(CONFIG_MACH_APQ8064_GK_KR) || defined(CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GV_KR) || defined(CONFIG_MACH_APQ8064_GKGLOBAL) || defined(CONFIG_MACH_APQ8064_AWIFI) || defined(CONFIG_MACH_APQ8064_GVAR_CMCC) || defined(CONFIG_MACH_APQ8064_L05E)  || defined(CONFIG_MACH_APQ8064_OMEGAR_KR)|| defined(CONFIG_MACH_APQ8064_OMEGA_KR) || defined(CONFIG_MACH_APQ8064_ALTEV)
 u16 *poweron_st = 0;
 uint16_t power_on_status_info_get(void)
 {
@@ -426,12 +426,10 @@ int socinfo_get_speed_bin(void)
 {
 	return g_speed_bin;
 }
-
 int socinfo_get_pvs_bin(void)
 {
 	return g_pvs_bin;
 }
-
 enum msm_cpu socinfo_get_msm_cpu(void)
 {
 	return cur_cpu;
@@ -648,7 +646,6 @@ socinfo_show_speed_bin(struct sys_device *dev,
 	return snprintf(buf, PAGE_SIZE, "%u\n",
 		socinfo_get_speed_bin());
 }
-
 static ssize_t
 socinfo_show_pvs_bin(struct sys_device *dev,
 		     struct sysdev_attribute *attr,
@@ -657,7 +654,6 @@ socinfo_show_pvs_bin(struct sys_device *dev,
 	return snprintf(buf, PAGE_SIZE, "%u\n",
 		socinfo_get_pvs_bin());
 }
-
 static struct sysdev_attribute socinfo_v1_files[] = {
 	_SYSDEV_ATTR(id, 0444, socinfo_show_id, NULL),
 	_SYSDEV_ATTR(version, 0444, socinfo_show_version, NULL),
@@ -803,11 +799,6 @@ static void * __init setup_dummy_socinfo(void)
 			sizeof(dummy_socinfo.build_id));
 	} else if (machine_is_msm8625_rumi3())
 		dummy_socinfo.id = 127;
-	else if (early_machine_is_mpq8092()) {
-		dummy_socinfo.id = 146;
-		strlcpy(dummy_socinfo.build_id, "mpq8092 - ",
-		sizeof(dummy_socinfo.build_id));
-	}
 	strlcat(dummy_socinfo.build_id, "Dummy socinfo",
 		sizeof(dummy_socinfo.build_id));
 	return (void *) &dummy_socinfo;

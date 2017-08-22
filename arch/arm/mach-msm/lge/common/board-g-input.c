@@ -35,9 +35,23 @@
 
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI4
 #include <linux/input/touch_synaptics_rmi4_i2c.h>
+#if defined(CONFIG_MACH_APQ8064_OMEGAR_KR) || defined(CONFIG_MACH_APQ8064_OMEGA_KR)
+#include <linux/input/lge_touch_core_ds5.h>
+#else
 #include <linux/input/lge_touch_core.h>
 #endif
+#endif
+
 #include <mach/board_lge.h>
+
+#if defined(CONFIG_MACH_APQ8064_OMEGAR_KR) || defined(CONFIG_MACH_APQ8064_OMEGA_KR)
+
+#if defined(CONFIG_RMI4_I2C)
+#include <linux/input/synaptics_dsx_g2.h>
+#include <linux/input/synaptics_dsx_i2c.h>
+#endif
+
+#endif
 
 #if defined(CONFIG_RMI4_I2C)
 #include <linux/rmi.h>
@@ -62,6 +76,8 @@
 #define APQ8064_GSBI3_QUP_I2C_BUS_ID            3
 
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI4
+
+#if !defined(CONFIG_MACH_APQ8064_OMEGAR_KR) && !defined(CONFIG_MACH_APQ8064_OMEGA_KR)
 int synaptics_t1320_power_on(int on)
 {
 	int rc = -EINVAL;
@@ -144,19 +160,24 @@ int synaptics_t1320_power_on(int on)
 	return rc;
 }
 
+#endif //!CONFIG_MACH_APQ8064_OMEGAR_KR && !CONFIG_MACH_APQ8064_OMEGA_KR
+
 static struct touch_power_module touch_pwr = {
 	.use_regulator	= 0,
 	.vdd			= "8921_l15",
 	.vdd_voltage	= 3300000,
 	.vio			= "8921_l22",
 	.vio_voltage	= 1800000,
+#if !defined(CONFIG_MACH_APQ8064_OMEGAR_KR) && !defined(CONFIG_MACH_APQ8064_OMEGA_KR)
 	.power			= synaptics_t1320_power_on,
+#endif
 };
+
 
 static struct touch_device_caps touch_caps = {
 	.button_support 			= 1,
 	.y_button_boundary			= 0,
-#if defined(CONFIG_MACH_APQ8064_GK_KR) || defined(CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GVDCM) || defined(CONFIG_MACH_APQ8064_GV_KR) || defined(CONFIG_MACH_APQ8064_GKGLOBAL)
+#if defined(CONFIG_MACH_APQ8064_GK_KR) || defined(CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GVDCM) || defined(CONFIG_MACH_APQ8064_GV_KR) || defined(CONFIG_MACH_APQ8064_GKGLOBAL) || defined(CONFIG_MACH_APQ8064_AWIFI) || defined(CONFIG_MACH_APQ8064_OMEGAR_KR) || defined(CONFIG_MACH_APQ8064_OMEGA_KR) || defined(CONFIG_MACH_APQ8064_ALTEV)
 	.number_of_button 			= 2,
 	.button_name 				= {KEY_BACK,KEY_MENU},
 #else
@@ -171,7 +192,7 @@ static struct touch_device_caps touch_caps = {
 	.max_pressure 				= 0xFF,
 	.max_id						= 10,
 
-#if defined(CONFIG_MACH_APQ8064_GK_KR) || defined(CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GVDCM) || defined(CONFIG_MACH_APQ8064_GV_KR) || defined(CONFIG_MACH_APQ8064_GKGLOBAL)
+#if defined(CONFIG_MACH_APQ8064_GK_KR) || defined(CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GVDCM) || defined(CONFIG_MACH_APQ8064_GV_KR) || defined(CONFIG_MACH_APQ8064_GKGLOBAL) || defined(CONFIG_MACH_APQ8064_AWIFI) || defined(CONFIG_MACH_APQ8064_OMEGAR_KR) || defined(CONFIG_MACH_APQ8064_OMEGA_KR) || defined(CONFIG_MACH_APQ8064_ALTEV)
 	.lcd_x						= 1080,
 	.lcd_y						= 1920,
 #elif defined(CONFIG_MACH_APQ8064_J1D) || defined(CONFIG_MACH_APQ8064_J1KD)
@@ -184,20 +205,35 @@ static struct touch_device_caps touch_caps = {
 
 #if defined(CONFIG_MACH_APQ8064_J1D) || defined(CONFIG_MACH_APQ8064_J1KD)
 	.x_max						= 1440,
+#elif defined(CONFIG_MACH_APQ8064_OMEGAR_KR) || defined(CONFIG_MACH_APQ8064_OMEGA_KR)
+	.x_max						= 2159, //5M 1100 before E006
 #else
 	.x_max						= 1536,
 #endif
+
+#if defined(CONFIG_MACH_APQ8064_OMEGAR_KR) || defined(CONFIG_MACH_APQ8064_OMEGA_KR)
+	.y_max						= 3839, //5M 1900 before E006
+#else
 	.y_max						= 2560,
+#endif
 };
 
 static struct touch_operation_role touch_role = {
 	.operation_mode 		= INTERRUPT_MODE,
 	.key_type				= TOUCH_HARD_KEY,
+#if defined(CONFIG_MACH_APQ8064_OMEGAR_KR) || defined(CONFIG_MACH_APQ8064_OMEGA_KR)
+	.report_mode			= CONTINUOUS_REPORT_MODE,
+#else
 	.report_mode			= REDUCED_REPORT_MODE,
+#endif
 	.delta_pos_threshold 	= 1,
 	.orientation 			= 0,
 	.report_period			= 10000000,
+#if defined(CONFIG_MACH_APQ8064_OMEGAR_KR) || defined(CONFIG_MACH_APQ8064_OMEGA_KR)
+	.booting_delay 			= 80,
+#else
 	.booting_delay 			= 200,
+#endif
 	.reset_delay			= 5,
 	.suspend_pwr			= POWER_OFF,
 	.resume_pwr				= POWER_ON,
@@ -205,6 +241,9 @@ static struct touch_operation_role touch_role = {
 	.jitter_curr_ratio		= 30,
 	.accuracy_filter_enable = 1,
 	.irqflags 				= IRQF_TRIGGER_FALLING,
+#if defined(CONFIG_MACH_APQ8064_OMEGAR_KR) || defined(CONFIG_MACH_APQ8064_OMEGA_KR)
+	.ghost_detection_enable = 1,
+#else
 #ifdef CUST_G_TOUCH
 	.show_touches			= 0,
 	.pointer_location		= 0,
@@ -213,13 +252,18 @@ static struct touch_operation_role touch_role = {
 	.ghost_detection_enable = 1,
 	.pen_enable		= 0,
 #endif
+#endif
 };
 
 static struct touch_platform_data j1_ts_data = {
 	.int_pin	= SYNAPTICS_TS_I2C_INT_GPIO,
 	.reset_pin	= TOUCH_RESET,
 	.maker		= "Synaptics",
+#if defined(CONFIG_MACH_APQ8064_OMEGAR_KR) || defined(CONFIG_MACH_APQ8064_OMEGA_KR)
+	.fw_version	= "DEFAULT",
+#else
 	.fw_version	= "E129",
+#endif
 	.caps		= &touch_caps,
 	.role		= &touch_role,
 	.pwr		= &touch_pwr,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -573,40 +573,6 @@ static const struct pm8xxx_adc_map_pt adcmap_ntcg_104ef_104fb[] = {
 	{419,		128000}
 };
 
-static struct pm8xxx_adc_map adcmap_btm_threshold = {
-	.pt = def_adcmap_btm_threshold,
-	.size = ARRAY_SIZE(def_adcmap_btm_threshold),
-};
-static struct pm8xxx_adc_map adcmap_pa_therm = {
-	.pt = def_adcmap_pa_therm,
-	.size = ARRAY_SIZE(def_adcmap_pa_therm),
-};
-static struct pm8xxx_adc_map adcmap_ntcg_104ef_104fb = {
-	.pt = def_adcmap_ntcg_104ef_104fb,
-	.size = ARRAY_SIZE(def_adcmap_ntcg_104ef_104fb),
-};
-
-void pm8xxx_set_adcmap_btm_threshold(void *pts, int size)
-{
-	adcmap_btm_threshold.pt = pts;
-	adcmap_btm_threshold.size = size;
-}
-EXPORT_SYMBOL(pm8xxx_set_adcmap_btm_threshold);
-
-void pm8xxx_set_adcmap_pa_therm(void *pts, int size)
-{
-	adcmap_pa_therm.pt = pts;
-	adcmap_pa_therm.size = size;
-}
-EXPORT_SYMBOL(pm8xxx_set_adcmap_pa_therm);
-
-void pm8xxx_set_adcmap_ntcg_104ef_104fb(void *pts, int size)
-{
-	adcmap_ntcg_104ef_104fb.pt = pts;
-	adcmap_ntcg_104ef_104fb.size = size;
-}
-EXPORT_SYMBOL(pm8xxx_set_adcmap_ntcg_104ef_104fb);
-
 static int32_t pm8xxx_adc_map_linear(const struct pm8xxx_adc_map_pt *pts,
 		uint32_t tablesize, int32_t input, int64_t *output)
 {
@@ -779,6 +745,37 @@ static int64_t pm8xxx_adc_scale_ratiometric_calib(int32_t adc_code,
 	return adc_voltage;
 }
 
+#if (defined(CONFIG_MACH_APQ8064_OMEGAR_KR) || defined(CONFIG_MACH_APQ8064_OMEGA_KR)) && defined(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI4)
+#define TOUCH_BATT_TEMPERATURE_DEGREE	45*10
+#define TOUCH_BATT_THERMAL_THRESHOLD	2*10
+#define TOUCH_TEMPERATURE_DEGREE	50
+#define TOUCH_THERMAL_THRESHOLD	3
+int touch_thermal_mode = 0;
+static int64_t touch_batt_temperature = 0;
+static int64_t touch_apq_temperature = 0;
+extern  void check_touch_xo_therm(int type);
+
+int check_touch_need_therm_mode(void)
+{
+	if(touch_batt_temperature >= TOUCH_BATT_TEMPERATURE_DEGREE && touch_apq_temperature >= TOUCH_TEMPERATURE_DEGREE)
+	{
+		touch_thermal_mode = 11; /* apq_therm is already high. 11 means that both batt_therm and apq_therm are high.*/
+		return 1;
+	}
+	else if(touch_batt_temperature >= TOUCH_BATT_TEMPERATURE_DEGREE)
+	{
+		touch_thermal_mode = 10; /* only batt_therm is high.*/
+		return 1;
+	}
+	else if(touch_apq_temperature >= TOUCH_TEMPERATURE_DEGREE)
+	{
+		touch_thermal_mode = 1; /* only apq_therm is high.*/
+		return 1;
+	}else
+		return 0;
+}
+#endif
+
 int32_t pm8xxx_adc_scale_batt_therm(int32_t adc_code,
 		const struct pm8xxx_adc_properties *adc_properties,
 		const struct pm8xxx_adc_chan_properties *chan_properties,
@@ -788,15 +785,39 @@ int32_t pm8xxx_adc_scale_batt_therm(int32_t adc_code,
 
 	bat_voltage = pm8xxx_adc_scale_ratiometric_calib(adc_code,
 			adc_properties, chan_properties);
-#ifdef CONFIG_LGE_CHARGER_TEMP_SCENARIO
-/* battery of therm H/W register level reading kwangjae1.lee@lge.com */
+#ifdef CONFIG_MACH_APQ8064_ALTEV
 	adc_chan_result->adc_value = bat_voltage;
 #endif
+#if (defined(CONFIG_MACH_APQ8064_OMEGAR_KR) || defined(CONFIG_MACH_APQ8064_OMEGA_KR)) && defined(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI4)
+	{
+		int32_t result = 0;
+		result = pm8xxx_adc_map_batt_therm(
+			adcmap_btm_threshold,
+			ARRAY_SIZE(adcmap_btm_threshold),
+			bat_voltage,
+			&adc_chan_result->physical);
+
+		touch_batt_temperature = adc_chan_result->physical;
+		if(touch_thermal_mode == 0 && adc_chan_result->physical >= TOUCH_BATT_TEMPERATURE_DEGREE) {
+			touch_thermal_mode = 10; /* only batt_therm is high.*/
+			check_touch_xo_therm(1);
+		} else if(touch_thermal_mode == 1 && adc_chan_result->physical >= TOUCH_BATT_TEMPERATURE_DEGREE){
+			touch_thermal_mode = 11; /* apq_therm is already high. 11 means that both batt_therm and apq_therm are high.*/
+		} else if(touch_thermal_mode == 10 && adc_chan_result->physical < (TOUCH_BATT_TEMPERATURE_DEGREE-TOUCH_BATT_THERMAL_THRESHOLD)){
+			touch_thermal_mode = 0; /* 10 means that only batt_therm was high.*/
+			check_touch_xo_therm(0);
+		} else if(touch_thermal_mode == 11 && adc_chan_result->physical < (TOUCH_BATT_TEMPERATURE_DEGREE-TOUCH_BATT_THERMAL_THRESHOLD)){
+			touch_thermal_mode = 1; /* apq_therm remains high.*/
+		}
+		return result;
+	}
+#else
 	return pm8xxx_adc_map_batt_therm(
 			adcmap_btm_threshold,
 			ARRAY_SIZE(adcmap_btm_threshold),
 			bat_voltage,
 			&adc_chan_result->physical);
+#endif
 }
 EXPORT_SYMBOL_GPL(pm8xxx_adc_scale_batt_therm);
 
@@ -809,7 +830,9 @@ int32_t pm8xxx_adc_scale_pa_therm(int32_t adc_code,
 
 	pa_voltage = pm8xxx_adc_scale_ratiometric_calib(adc_code,
 			adc_properties, chan_properties);
-
+#ifdef CONFIG_MACH_APQ8064_ALTEV
+    adc_chan_result->adc_value = pa_voltage;
+#endif
 	return pm8xxx_adc_map_linear(
 			adcmap_pa_therm,
 			ARRAY_SIZE(adcmap_pa_therm),
@@ -829,12 +852,44 @@ int32_t pm8xxx_adc_scale_apq_therm(int32_t adc_code,
 
 	apq_voltage = pm8xxx_adc_scale_ratiometric_calib(adc_code,
 			adc_properties, chan_properties);
-
-	return pm8xxx_adc_map_linear(
+#if (defined(CONFIG_MACH_APQ8064_OMEGAR_KR) || defined(CONFIG_MACH_APQ8064_OMEGA_KR)) && defined(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI4)
+	{
+		int32_t result = 0;
+		result = pm8xxx_adc_map_linear(
 			adcmap_apq_therm,
 			ARRAY_SIZE(adcmap_apq_therm),
 			apq_voltage,
 			&adc_chan_result->physical);
+
+		touch_apq_temperature = adc_chan_result->physical;
+		if(touch_thermal_mode == 0 && adc_chan_result->physical >= TOUCH_TEMPERATURE_DEGREE) {
+			touch_thermal_mode = 1; /* only apq_therm is high.*/
+			check_touch_xo_therm(1);
+		} else if(touch_thermal_mode == 10 && adc_chan_result->physical >= TOUCH_TEMPERATURE_DEGREE){
+			touch_thermal_mode = 11; /* batt_therm is already high. 11 means that both batt_therm and apq_therm are high.*/
+		} else if(touch_thermal_mode == 1 && adc_chan_result->physical < (TOUCH_TEMPERATURE_DEGREE-TOUCH_THERMAL_THRESHOLD)){
+			touch_thermal_mode = 0; /* 1 means that only apq_therm was high.*/
+			check_touch_xo_therm(0);
+		} else if(touch_thermal_mode == 11 && adc_chan_result->physical < (TOUCH_TEMPERATURE_DEGREE-TOUCH_THERMAL_THRESHOLD)){
+			touch_thermal_mode = 10; /*batt_therm remains high.*/
+		}
+		return result;
+	}
+#else
+#ifdef CONFIG_MACH_APQ8064_ALTEV
+    adc_chan_result->adc_value = apq_voltage;
+#endif
+	return pm8xxx_adc_map_linear(
+#if defined(CONFIG_MACH_APQ8064_ALTEV) || defined(CONFIG_MACH_APQ8064_AWIFI) || defined(CONFIG_MACH_APQ8064_L05E)
+			adcmap_pa_therm,
+                        ARRAY_SIZE(adcmap_pa_therm),
+#else
+			adcmap_apq_therm,
+                        ARRAY_SIZE(adcmap_apq_therm),			
+#endif
+			apq_voltage,
+			&adc_chan_result->physical);
+#endif
 }
 EXPORT_SYMBOL_GPL(pm8xxx_adc_scale_apq_therm);
 

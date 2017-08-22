@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
  * Copyright (c) 2012, LGE Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,44 +37,44 @@ static struct msm_dcvs_freq_entry grp3d_freq[] = {
 };
 
 static struct msm_dcvs_core_info grp3d_core_info = {
-       .freq_tbl               = &grp3d_freq[0],
-       .num_cores              = 1,
-       .sensors                = (int[]){0},
-       .thermal_poll_ms        = 60000,
-       .core_param             = {
-	       .core_type      = MSM_DCVS_CORE_TYPE_GPU,
-       },
-       .algo_param             = {
-	       .disable_pc_threshold   = 0,
-	       .em_win_size_min_us     = 100000,
-	       .em_win_size_max_us     = 300000,
-	       .em_max_util_pct        = 97,
-	       .group_id               = 0,
-	       .max_freq_chg_time_us   = 100000,
-	       .slack_mode_dynamic     = 0,
-	       .slack_time_min_us      = 39000,
-	       .slack_time_max_us      = 39000,
-	       .ss_win_size_min_us     = 1000000,
-	       .ss_win_size_max_us     = 1000000,
-	       .ss_util_pct            = 95,
-	       .ss_no_corr_below_freq  = 0,
-       },
+	.freq_tbl		= &grp3d_freq[0],
+	.num_cores		= 1,
+	.sensors		= (int[]){0},
+	.thermal_poll_ms	= 60000,
+	.core_param		= {
+		.core_type	= MSM_DCVS_CORE_TYPE_GPU,
+	},
+	.algo_param		= {
+		.disable_pc_threshold	= 0,
+		.em_win_size_min_us	= 100000,
+		.em_win_size_max_us	= 300000,
+		.em_max_util_pct	= 97,
+		.group_id		= 0,
+		.max_freq_chg_time_us	= 100000,
+		.slack_mode_dynamic	= 0,
+		.slack_time_min_us	= 39000,
+		.slack_time_max_us	= 39000,
+		.ss_win_size_min_us	= 1000000,
+		.ss_win_size_max_us	= 1000000,
+		.ss_util_pct		= 95,
+		.ss_no_corr_below_freq	= 0,
+	},
 
-       .energy_coeffs          = {
-	       .leakage_coeff_a        = -17720,
-	       .leakage_coeff_b        = 37,
-	       .leakage_coeff_c        = 3329,
-	       .leakage_coeff_d        = -277,
+	.energy_coeffs		= {
+		.leakage_coeff_a	= -17720,
+		.leakage_coeff_b	= 37,
+		.leakage_coeff_c	= 3329,
+		.leakage_coeff_d	= -277,
 
-	       .active_coeff_a         = 2492,
-	       .active_coeff_b         = 0,
-	       .active_coeff_c         = 0
-       },
+		.active_coeff_a		= 2492,
+		.active_coeff_b		= 0,
+		.active_coeff_c		= 0
+	},
 
-       .power_param            = {
-	       .current_temp   = 25,
-	       .num_freq       = ARRAY_SIZE(grp3d_freq),
-       }
+	.power_param		= {
+		.current_temp	= 25,
+		.num_freq	= ARRAY_SIZE(grp3d_freq),
+	}
 };
 #endif /* CONFIG_MSM_DCVS */
 
@@ -188,12 +188,6 @@ static struct resource kgsl_3d0_resources[] = {
 	{
 		.name = KGSL_3D0_REG_MEMORY,
 		.start = 0x04300000, /* GFX3D address */
-		.end = 0x0430ffff,
-		.flags = IORESOURCE_MEM,
-	},
-	{
-		.name = KGSL_3D0_SHADER_MEMORY,
-		.start = 0x04310000, /* Shader Mem Address */
 		.end = 0x0431ffff,
 		.flags = IORESOURCE_MEM,
 	},
@@ -261,6 +255,7 @@ static struct kgsl_device_platform_data kgsl_3d0_pdata = {
 	.num_levels = 5,
 	.set_grp_async = NULL,
 	.idle_timeout = HZ/10,
+	.nap_allowed = true,
 	.strtstp_sleepwake = true,
 	.clk_map = KGSL_CLK_CORE | KGSL_CLK_IFACE | KGSL_CLK_MEM_IFACE,
 #ifdef CONFIG_MSM_BUS_SCALING

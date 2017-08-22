@@ -28,6 +28,7 @@
 #ifdef CONFIG_MMC_MSM_SDC4_SUPPORT
 #include <linux/skbuff.h>
 #include <linux/wlan_plat.h>
+#include <linux/pm_qos.h>
 #endif /* CONFIG_MMC_MSM_SDC4_SUPPORT */
 
 /* APQ8064 has 4 SDCC controllers */
@@ -330,7 +331,7 @@ static unsigned int sdc4_sup_clk_rates[] = {
 static unsigned int g_wifi_detect;
 static void *sdc4_dev;
 void (*sdc4_status_cb)(int card_present, void *dev);
-#ifdef CONFIG_LGE_BCM433X_PATCH
+#if defined(CONFIG_LGE_BCM433X_PATCH) && !defined(CONFIG_BCMDHD_MODULE)
 extern void
 msmsdcc_set_mmc_enable(int card_present, void *dev_id);
 #endif
@@ -356,7 +357,9 @@ static struct mmc_platform_data sdc4_data = {
 	.sup_clk_table	= sdc4_sup_clk_rates,
 	.sup_clk_cnt	= ARRAY_SIZE(sdc4_sup_clk_rates),
 	.pin_data	= &mmc_slot_pin_data[SDCC4],
+#ifndef CONFIG_BCMDHD_MODULE
 	.nonremovable   =  1,
+#endif
 	//.sdiowakeup_irq = MSM_GPIO_TO_INT(65), // inband test
 	//.msm_bus_voting_data = &sps_to_ddr_bus_voting_data,
 	.status         = sdc4_status,
@@ -488,7 +491,7 @@ int bcm_wifi_set_power(int enable)
 	int ret = 0;
 	if (enable)
 	{
-#ifdef CONFIG_LGE_BCM433X_PATCH
+#if defined(CONFIG_LGE_BCM433X_PATCH) && !defined(CONFIG_BCMDHD_MODULE)
 		msmsdcc_set_mmc_enable(enable,sdc4_dev);
 #endif
 		ret = gpio_direction_output(WLAN_POWER, 1); 
@@ -516,7 +519,7 @@ int bcm_wifi_set_power(int enable)
 
 		// WLAN chip down 
 		// mdelay(100);//for booring time save
-#ifdef CONFIG_LGE_BCM433X_PATCH
+#if defined(CONFIG_LGE_BCM433X_PATCH) && !defined(CONFIG_BCMDHD_MODULE)
 		msmsdcc_set_mmc_enable(enable,sdc4_dev);
 #endif
 		printk(KERN_ERR "%s: wifi power successed to pull down\n",__func__);
@@ -525,6 +528,65 @@ int bcm_wifi_set_power(int enable)
 	return ret;
 }
 
+#define LGE_BCM_WIFI_DMA_QOS_CONTROL
+#ifdef LGE_BCM_WIFI_DMA_QOS_CONTROL
+static int wifi_dma_state; /* 0 : INATIVE, 1:INIT, 2:IDLE, 3:ACTIVE */
+static struct pm_qos_request wifi_dma_qos;
+static struct delayed_work req_dma_work;
+static uint32_t packet_transfer_cnt;
+
+static void bcm_wifi_req_dma_work(struct work_struct *work)
+{
+	switch (wifi_dma_state) {
+		case 2: /* IDLE State */
+			if (packet_transfer_cnt < 100) {
+				/* IDLE -> INIT */
+				wifi_dma_state = 1;
+				/* printk(KERN_ERR "%s: schedule work : %d : (IDLE -> INIT)\n", __func__, packet_transfer_cnt); */
+			} else {
+				/* IDLE -> ACTIVE */
+				wifi_dma_state = 3;
+				pm_qos_update_request(&wifi_dma_qos, 7);
+				schedule_delayed_work(&req_dma_work, msecs_to_jiffies(50));
+				/* printk(KERN_ERR "%s: schedule work : %d : (IDLE -> ACTIVE)\n", __func__, packet_transfer_cnt); */
+			}
+			break;
+
+		case 3: /* ACTIVE State */
+			if (packet_transfer_cnt < 10) {
+				/* ACTIVE -> IDLE */
+				wifi_dma_state = 2;
+				pm_qos_update_request(&wifi_dma_qos, PM_QOS_DEFAULT_VALUE);
+				schedule_delayed_work(&req_dma_work, msecs_to_jiffies(1000));
+				/* printk(KERN_ERR "%s: schedule work : %d : (ACTIVE -> IDLE)\n", __func__, packet_transfer_cnt); */
+			} else {
+				/* Keep ACTIVE */
+				schedule_delayed_work(&req_dma_work, msecs_to_jiffies(50));
+				/* printk(KERN_ERR "%s: schedule work : %d :  (ACTIVE -> ACTIVE)\n", __func__, packet_transfer_cnt); */
+			}
+			break;
+
+		default:
+			break;
+	}
+
+	packet_transfer_cnt = 0;
+}
+
+void bcm_wifi_req_dma_qos(int vote)
+{
+	if (vote)
+		packet_transfer_cnt++;
+
+	/* INIT -> IDLE */
+	if (wifi_dma_state == 1 && vote) {
+		wifi_dma_state = 2; /* IDLE */
+		schedule_delayed_work(&req_dma_work, msecs_to_jiffies(1000));
+		/* printk(KERN_ERR "%s: schedule work (INIT -> IDLE)\n", __func__); */
+	}
+}
+#endif
+
 int __init bcm_wifi_init_gpio_mem(void)
 {
 	int rc=0;
@@ -532,6 +594,13 @@ int __init bcm_wifi_init_gpio_mem(void)
 	if (gpio_tlmm_config(wifi_config_power_on[0], GPIO_CFG_ENABLE))
 		printk(KERN_ERR "%s: Failed to configure WLAN_POWER\n", __func__);
 */
+
+#ifdef LGE_BCM_WIFI_DMA_QOS_CONTROL
+	INIT_DELAYED_WORK(&req_dma_work, bcm_wifi_req_dma_work);
+	pm_qos_add_request(&wifi_dma_qos, PM_QOS_CPU_DMA_LATENCY, PM_QOS_DEFAULT_VALUE);
+	wifi_dma_state = 1; /* INIT */
+	printk("%s: wifi_dma_qos is added\n", __func__);
+#endif
 
 	if (gpio_request(WLAN_POWER, "WL_REG_ON"))		
 		printk("Failed to request gpio %d for WL_REG_ON\n", WLAN_POWER);	
@@ -608,6 +677,285 @@ static int bcm_wifi_get_mac_addr(unsigned char* buf)
 	return 0;
 }
 
+#define COUNTRY_BUF_SZ	4
+struct cntry_locales_custom {
+	char iso_abbrev[COUNTRY_BUF_SZ];
+	char custom_locale[COUNTRY_BUF_SZ];
+	int custom_locale_rev;
+};
+
+/* Customized Locale table */
+const struct cntry_locales_custom bcm_wifi_translate_custom_table[] = {
+/* Table should be filled out based on custom platform regulatory requirement */
+           {"",       "GB",     0},
+           {"AD",    "GB",     0},
+           {"AE",    "KR",     24},
+           {"AF",    "AF",     0},
+           {"AG",    "US",     100},
+           {"AI",     "US",     100},
+           {"AL",    "GB",     0},
+           {"AM",   "IL",      10},
+           {"AN",   "BR",     0},
+           {"AO",   "IL",      10},
+           {"AR",    "BR",     0},
+           {"AS",    "US",     100},
+           {"AT",    "GB",     0},
+           {"AU",    "AU",    2},
+           {"AW",   "KR",     24},
+           {"AZ",    "BR",     0},
+           {"BA",    "GB",     0},
+           {"BB",    "RU",     1},
+           {"BD",    "CN",    0},
+           {"BE",    "GB",     0},
+           {"BF",    "CN",    0},
+           {"BG",    "GB",     0},
+           {"BH",    "RU",     1},
+           {"BI",     "IL",      10},
+           {"BJ",     "IL",      10},
+           {"BM",   "US",     100},
+           {"BN",    "RU",     1},
+           {"BO",    "IL",      10},
+           {"BR",    "BR",     0},
+           {"BS",    "RU",     1},
+           {"BT",    "IL",      10},
+           {"BW",   "GB",     0},
+           {"BY",    "GB",     0},
+           {"BZ",    "IL",      10},
+           {"CA",    "US",     100},
+           {"CD",    "IL",      10},
+           {"CF",    "IL",      10},
+           {"CG",    "IL",      10},
+           {"CH",    "GB",     0},
+           {"CI",     "IL",      10},
+           {"CK",    "BR",     0},
+           {"CL",    "RU",     1},
+           {"CM",   "IL",      10},
+           {"CN",    "CN",    0},
+           {"CO",    "BR",     0},
+           {"CR",    "BR",     0},
+           {"CU",    "BR",     0},
+           {"CV",    "GB",     0},
+           {"CX",    "AU",    2},
+           {"CY",    "GB",     0},
+           {"CZ",    "GB",     0},
+           {"DE",    "GB",     0},
+           {"DJ",    "IL",      10},
+           {"DK",    "GB",     0},
+           {"DM",   "BR",     0},
+           {"DO",   "BR",     0},
+           {"DZ",    "KW",    1},
+           {"EC",    "BR",     0},
+           {"EE",    "GB",     0},
+           {"EG",    "RU",     1},
+           {"ER",    "IL",      10},
+           {"ES",    "GB",     0},
+           {"ET",    "GB",     0},
+           {"FI",     "GB",     0},
+           {"FJ",     "IL",      10},
+           {"FM",   "US",     100},
+           {"FO",    "GB",     0},
+           {"FR",    "GB",     0},
+           {"GA",    "IL",      10},
+           {"GB",    "GB",     0},
+           {"GD",    "BR",     0},
+           {"GE",    "GB",     0},
+           {"GF",    "GB",     0},
+           {"GH",    "BR",     0},
+           {"GI",     "GB",     0},
+           {"GM",   "IL",      10},
+           {"GN",   "IL",      10},
+           {"GP",    "GB",     0},
+           {"GQ",   "IL",      10},
+           {"GR",    "GB",     0},
+           {"GT",    "RU",     1},
+           {"GU",    "US",     100},
+           {"GW",   "IL",      10},
+           {"GY",    "QA",    0},
+           {"HK",    "BR",     0},
+           {"HN",   "CN",    0},
+           {"HR",    "GB",     0},
+           {"HT",    "RU",     1},
+           {"HU",    "GB",     0},
+           {"ID",     "QA",    0},
+           {"IE",     "GB",     0},
+           {"IL",     "IL",      0},
+           {"IM",    "GB",     0},
+           {"IN",    "RU",     1},
+           {"IQ",    "IL",      10},
+           {"IR",     "IL",      10},
+           {"IS",     "GB",     0},
+           {"IT",     "GB",     0},
+           {"JE",     "GB",     0},
+           {"JM",    "GB",     0},
+           {"JP",     "JP",      5},
+           {"KE",    "GB",     0},
+           {"KG",    "IL",      10},
+           {"KH",    "BR",     0},
+           {"KI",     "AU",    2},
+           {"KM",   "IL",      10},
+           {"KP",    "IL",      10},
+           {"KR",    "KR",     24},
+           {"KW",   "KW",    1},
+           {"KY",    "US",     100},
+           {"KZ",    "BR",     0},
+           {"LA",    "KR",     24},
+           {"LB",    "BR",     0},
+           {"LC",    "BR",     0},
+           {"LI",     "GB",     0},
+           {"LK",    "BR",     0},
+           {"LR",    "BR",     0},
+           {"LS",     "GB",     0},
+           {"LT",     "GB",     0},
+           {"LU",    "GB",     0},
+           {"LV",     "GB",     0},
+           {"LY",     "IL",      10},
+           {"MA",   "KW",    1},
+           {"MC",   "GB",     0},
+           {"MD",   "GB",     0},
+           {"ME",   "GB",     0},
+           {"MF",   "GB",     0},
+           {"MG",   "IL",      10},
+           {"MH",   "BR",     0},
+           {"MK",   "GB",     0},
+           {"ML",    "IL",      10},
+           {"MM",  "IL",      10},
+           {"MN",   "IL",      10},
+           {"MO",   "CN",    0},
+           {"MP",   "US",     100},
+           {"MQ",   "GB",     0},
+           {"MR",   "GB",     0},
+           {"MS",   "GB",     0},
+           {"MT",   "GB",     0},
+           {"MU",   "GB",     0},
+           {"MD",   "GB",     0},
+           {"ME",   "GB",     0},
+           {"MF",   "GB",     0},
+           {"MG",   "IL",      10},
+           {"MH",   "BR",     0},
+           {"MK",   "GB",     0},
+           {"ML",    "IL",      10},
+           {"MM",  "IL",      10},
+           {"MN",   "IL",      10},
+           {"MO",   "CN",    0},
+           {"MP",   "US",     100},
+           {"MQ",   "GB",     0},
+           {"MR",   "GB",     0},
+           {"MS",   "GB",     0},
+           {"MT",   "GB",     0},
+           {"MU",   "GB",     0},
+           {"MV",   "RU",     1},
+           {"MW",  "CN",    0},
+           {"MX",   "RU",     1},
+           {"MY",   "RU",     1},
+           {"MZ",   "BR",     0},
+           {"NA",   "BR",     0},
+           {"NC",    "IL",      10},
+           {"NE",    "BR",     0},
+           {"NF",    "BR",     0},
+           {"NG",   "NG",    0},
+           {"NI",    "BR",     0},
+           {"NL",    "GB",     0},
+           {"NO",   "GB",     0},
+           {"NP",    "SA",     0},
+           {"NR",    "IL",      10},
+           {"NU",   "BR",     0},
+           {"NZ",    "BR",     0},
+           {"OM",   "GB",     0},
+           {"PA",    "RU",     1},
+           {"PE",    "BR",     0},
+           {"PF",    "GB",     0},
+           {"PH",    "BR",     0},
+           {"PK",    "CN",    0},
+           {"PL",     "GB",     0},
+           {"PM",   "GB",     0},
+           {"PN",    "GB",     0},
+           {"PR",    "US",     100},
+           {"PS",    "BR",     0},
+           {"PT",    "GB",     0},
+           {"PW",   "BR",     0},
+           {"PY",    "BR",     0},
+           {"QA",   "CN",    0},
+           {"RE",    "GB",     0},
+           {"RKS",   "IL",     10},
+           {"RO",    "GB",     0},
+           {"RS",    "GB",     0},
+           {"RU",    "RU",     10},
+           {"RW",   "CN",    0},
+           {"SA",    "SA",     0},
+           {"SB",    "IL",      10},
+           {"SC",    "IL",      10},
+           {"SD",    "GB",     0},
+           {"SE",    "GB",     0},
+           {"SG",    "BR",     0},
+           {"SI",     "GB",     0},
+           {"SK",    "GB",     0},
+           {"SKN",  "CN",   0},
+           {"SL",     "IL",      10},
+           {"SM",   "GB",     0},
+           {"SN",    "GB",     0},
+           {"SO",    "IL",      10},
+           {"SR",    "IL",      10},
+           {"SS",    "GB",     0},
+           {"ST",    "IL",      10},
+           {"SV",    "RU",     1},
+           {"SY",    "BR",     0},
+           {"SZ",    "IL",      10},
+           {"TC",    "GB",     0},
+           {"TD",    "IL",      10},
+           {"TF",    "GB",     0},
+           {"TG",    "IL",      10},
+           {"TH",    "BR",     0},
+           {"TJ",     "IL",      10},
+           {"TL",     "BR",     0},
+           {"TM",   "IL",      10},
+           {"TN",    "KW",    1},
+           {"TO",    "IL",      10},
+           {"TR",    "GB",     0},
+           {"TT",    "BR",     0},
+           {"TV",    "IL",      10},
+           {"TW",   "TW",    2},
+           {"TZ",    "CN",    0},
+           {"UA",    "RU",     1},
+           {"UG",    "BR",     0},
+           {"US",    "US",     100},
+           {"UY",    "BR",     0},
+           {"UZ",    "IL",      10},
+           {"VA",    "GB",     0},
+           {"VC",    "BR",     0},
+           {"VE",    "RU",     1},
+           {"VG",    "GB",     0},
+           {"VI",     "US",     100},
+           {"VN",    "BR",     0},
+           {"VU",    "IL",      10},
+           {"WS",   "SA",     0},
+           {"YE",    "IL",      10},
+           {"YT",    "GB",     0},
+           {"ZA",    "GB",     0},
+           {"ZM",   "RU",     1},
+           {"ZW",   "BR",     0},
+};
+
+static void *bcm_wifi_get_country_code(char *ccode)
+{
+	int size, i;
+	static struct cntry_locales_custom country_code;
+
+	size = ARRAY_SIZE(bcm_wifi_translate_custom_table);
+
+	if ((size == 0) || (ccode == NULL))
+		return NULL;
+
+	for (i = 0; i < size; i++) {
+		if (strcmp(ccode, bcm_wifi_translate_custom_table[i].iso_abbrev) == 0)
+			return (void *)&bcm_wifi_translate_custom_table[i];
+	}
+
+	memset(&country_code, 0, sizeof(struct cntry_locales_custom));
+	strlcpy(country_code.custom_locale, ccode, COUNTRY_BUF_SZ);
+
+	return (void *)&country_code;
+}
+
 static struct wifi_platform_data bcm_wifi_control = {
 #ifdef CONFIG_BROADCOM_WIFI_RESERVED_MEM
 	.mem_prealloc	= brcm_wlan_mem_prealloc,
@@ -616,6 +964,7 @@ static struct wifi_platform_data bcm_wifi_control = {
 	.set_reset      = bcm_wifi_reset,
 	.set_carddetect = bcm_wifi_carddetect,
 	.get_mac_addr   = bcm_wifi_get_mac_addr, // Get custom MAC address
+	.get_country_code = bcm_wifi_get_country_code,
 };
 
 static struct resource wifi_resource[] = {
@@ -649,6 +998,9 @@ void __init apq8064_init_mmc(void)
 {
 	if (apq8064_sdc1_pdata)
 		apq8064_add_sdcc(1, apq8064_sdc1_pdata);
+	}
+
+	msm_add_uio();
 
 	if (apq8064_sdc2_pdata)
 		apq8064_add_sdcc(2, apq8064_sdc2_pdata);

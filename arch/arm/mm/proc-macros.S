@@ -42,7 +42,7 @@
  */
 	.macro	mmid, rd, rn
 #ifdef __ARMEB__
-	ldr	\rd, [\rn, #MM_CONTEXT_ID]
+	ldr	\rd, [\rn, #MM_CONTEXT_ID + 4 ]
 #else
 	ldr	\rd, [\rn, #MM_CONTEXT_ID]
 #endif

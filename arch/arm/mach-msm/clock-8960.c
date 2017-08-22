@@ -1393,7 +1393,7 @@ static struct clk_freq_tbl clk_tbl_gsbi_qup[] = {
 	F_GSBI_QUP(27000000, pxo,  1, 0,  0),
 #if defined(CONFIG_LGE_BROADCAST_ONESEG)
 	F_GSBI_QUP(32000000, pll8, 4, 1,  3),
-#endif	 /* CONFIG_LGE_BROADCAST_ONESEG */
+#endif	 /*                             */
 	F_GSBI_QUP(48000000, pll8, 4, 1,  2),
 	F_GSBI_QUP(51200000, pll8, 1, 2, 15),
 	F_END
@@ -1544,7 +1544,7 @@ static struct clk_freq_tbl clk_tbl_sdc[] = {
 	F_END
 };
 
-static CLK_SDC(sdc1_clk, 1, 6,  52000000, 104000000);
+static CLK_SDC(sdc1_clk, 1, 6,  52000000, 208000000);
 static CLK_SDC(sdc2_clk, 2, 5,  52000000, 104000000);
 static CLK_SDC(sdc3_clk, 3, 4, 104000000, 208000000);
 static CLK_SDC(sdc4_clk, 4, 3,  33000000,  67000000);
@@ -3516,7 +3516,6 @@ static struct rcg_clk gfx2d1_clk = {
 /*Shared by 8064, 8930, and 8960ab*/
 static struct clk_freq_tbl clk_tbl_gfx3d[] = {
 	F_GFX3D(        0, gnd,   0,  0),
-	F_GFX3D(  1800000, pxo,   1, 15),
 	F_GFX3D( 27000000, pxo,   0,  0),
 	F_GFX3D( 48000000, pll8,  1,  8),
 	F_GFX3D( 54857000, pll8,  1,  7),
@@ -4044,6 +4043,7 @@ static struct rcg_clk rot_clk = {
 	},
 };
 
+#ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
 static int hdmi_pll_clk_enable(struct clk *c)
 {
 	int ret;
@@ -4112,6 +4112,11 @@ static struct clk_freq_tbl clk_tbl_tv[] = {
 	F_TV(148500000, hdmi_pll, 148500000, 1, 0, 0),
 	F_END
 };
+#else
+static struct clk_freq_tbl clk_tbl_tv[] = {
+	F_END
+};
+#endif
 
 static unsigned long fmax_tv_src_8064[VDD_DIG_NUM] = {
 	[VDD_DIG_LOW]     =  74250000,
@@ -4124,11 +4129,13 @@ static unsigned long fmax_tv_src_8064[VDD_DIG_NUM] = {
  */
 void set_rate_tv(struct rcg_clk *rcg, struct clk_freq_tbl *nf)
 {
+#ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
 	unsigned long pll_rate = (unsigned long)nf->extra_freq_data;
 	if (pll_rate) {
 		hdmi_pll_set_rate(pll_rate);
 		hdmi_pll_clk.rate = pll_rate;
 	}
+#endif
 	set_rate_mnd(rcg, nf);
 }
 
@@ -5301,7 +5308,7 @@ static struct clk_lookup msm_clocks_8064[] = {
 #endif
 	CLK_LOOKUP("core_clk",		gsbi2_uart_clk.c,	""),
 
-#if !defined(CONFIG_MACH_APQ8064_GVDCM)
+#if !defined(CONFIG_MACH_APQ8064_GVDCM) && !defined(CONFIG_MACH_APQ8064_L05E)
 	CLK_LOOKUP("core_clk",		gsbi3_uart_clk.c,	""),
 #else
 	/* GV DCM Felica/NFC Rev.C */
@@ -5312,24 +5319,25 @@ static struct clk_lookup msm_clocks_8064[] = {
 	#endif
 #endif
 
-#if !defined(CONFIG_MACH_APQ8064_GVDCM)
-	/* GJ DCM */
-	#if defined(CONFIG_LGE_IRDA)
-		CLK_LOOKUP("core_clk",		gsbi4_uart_clk.c,	"msm_serial_hsl.1"),
-	#else
-		CLK_LOOKUP("core_clk",		gsbi4_uart_clk.c,	"msm_serial_hsl.0"),
-	#endif
+#if !defined(CONFIG_MACH_APQ8064_GVDCM) && !defined(CONFIG_MACH_APQ8064_L05E)
+       /* GJ DCM */
+       #if defined(CONFIG_LGE_IRDA)
+               CLK_LOOKUP("core_clk",          gsbi4_uart_clk.c,       "msm_serial_hsl.1"),
+       #else
+               CLK_LOOKUP("core_clk",          gsbi4_uart_clk.c,       "msm_serial_hsl.0"),
+       #endif
 #else
-	/* GV DCM */
-	#if defined(CONFIG_LGE_IRDA)
-		CLK_LOOKUP("core_clk",		gsbi4_uart_clk.c,	"msm_serial_hsl.3"),
-	#else
-		CLK_LOOKUP("core_clk",		gsbi4_uart_clk.c,	"msm_serial_hsl.0"),
-	#endif
+       /* GV DCM */
+       #if defined(CONFIG_LGE_IRDA)
+               CLK_LOOKUP("core_clk",          gsbi4_uart_clk.c,       "msm_serial_hsl.3"),
+       #else
+               CLK_LOOKUP("core_clk",          gsbi4_uart_clk.c,       "msm_serial_hsl.0"),
+       #endif
 #endif
+
 	CLK_LOOKUP("core_clk",		gsbi5_uart_clk.c,	""),
 
-#if !defined(CONFIG_MACH_APQ8064_GVDCM)
+#if !defined(CONFIG_MACH_APQ8064_GVDCM) && !defined(CONFIG_MACH_APQ8064_L05E)
 	/* GJ for Felica/NFC */
 	#if defined(CONFIG_LGE_FELICA) || defined(CONFIG_LGE_NFC_SONY_CXD2235AGG)
 		CLK_LOOKUP("core_clk",		gsbi6_uart_clk.c,	"msm_serial_hsl.2"),
@@ -5337,7 +5345,7 @@ static struct clk_lookup msm_clocks_8064[] = {
 	#elif defined(CONFIG_LGE_BLUESLEEP)
 		CLK_LOOKUP("core_clk",		gsbi6_uart_clk.c,	"msm_serial_hs.0"),
 	#else
-		CLK_LOOKUP("core_clk",		gsbi6_uart_clk.c,	""),
+		CLK_LOOKUP("core_clk",		gsbi6_uart_clk.c,	"msm_serial_hs.0"),
 	#endif
 #else
 	/* GV for Broadcom BCM4334 IC */
@@ -5347,7 +5355,7 @@ static struct clk_lookup msm_clocks_8064[] = {
 	#elif defined(CONFIG_LGE_FELICA) || defined(CONFIG_LGE_NFC_SONY_CXD2235AGG)
 		CLK_LOOKUP("core_clk",		gsbi6_uart_clk.c,	"msm_serial_hsl.2"),
 	#else
-		CLK_LOOKUP("core_clk",		gsbi6_uart_clk.c,	""),
+		CLK_LOOKUP("core_clk",		gsbi6_uart_clk.c,	"msm_serial_hs.0"),
 	#endif
 #endif
 
@@ -5366,10 +5374,14 @@ static struct clk_lookup msm_clocks_8064[] = {
 	CLK_LOOKUP("core_clk",		gsbi5_qup_clk.c,	"spi_qsd.0"),
 #else
 	CLK_LOOKUP("core_clk",      gsbi5_qup_clk.c,    "qup_i2c.5"),
-#endif /* CONFIG_LGE_BROADCAST */
+#endif /*                      */
 
 	CLK_LOOKUP("core_clk",		gsbi6_qup_clk.c,	""),
+#if defined(CONFIG_SND_SOC_TPA2028D_DUAL_SPEAKER) || (defined(CONFIG_MACH_LGE)&& defined (CONFIG_TOUCHSCREEN_S340010_SYNAPTICS_TK))
+	CLK_LOOKUP("core_clk",		gsbi7_qup_clk.c,	"qup_i2c.7"),
+#else
 	CLK_LOOKUP("core_clk",		gsbi7_qup_clk.c,	""),
+#endif	
 	CLK_LOOKUP("core_clk",		pdm_clk.c,		""),
 	CLK_LOOKUP("mem_clk",		pmem_clk.c,		"msm_sps"),
 	CLK_LOOKUP("core_clk",          prng_clk.c,		"msm_rng.0"),
@@ -5411,7 +5423,7 @@ static struct clk_lookup msm_clocks_8064[] = {
 	CLK_LOOKUP("iface_clk",		gsbi1_p_clk.c,	"qup_i2c.0"),
 	CLK_LOOKUP("iface_clk",		gsbi2_p_clk.c,		""),
 
-#if !defined(CONFIG_MACH_APQ8064_GVDCM)
+#if !defined(CONFIG_MACH_APQ8064_GVDCM) && !defined(CONFIG_MACH_APQ8064_L05E)
 	CLK_LOOKUP("iface_clk",		gsbi3_p_clk.c,	""),
 #else
 	/* GV DCM Felica/NFC Rev.C */
@@ -5423,7 +5435,7 @@ static struct clk_lookup msm_clocks_8064[] = {
 #endif
 	CLK_LOOKUP("iface_clk",		gsbi3_p_clk.c,		"qup_i2c.3"),
 
-#if !defined(CONFIG_MACH_APQ8064_GVDCM)
+#if !defined(CONFIG_MACH_APQ8064_GVDCM) && !defined(CONFIG_MACH_APQ8064_L05E)
 	/* GJ DCM */
 	#if defined(CONFIG_LGE_IRDA)
 		CLK_LOOKUP("iface_clk",		gsbi4_p_clk.c,	"msm_serial_hsl.1"),
@@ -5439,15 +5451,17 @@ static struct clk_lookup msm_clocks_8064[] = {
 	#endif
 #endif
 	CLK_LOOKUP("iface_clk",		gsbi4_p_clk.c,		"qup_i2c.4"),
-
+#if defined(CONFIG_MACH_APQ8064_L05E)
+    CLK_LOOKUP("iface_clk",         gsbi4_p_clk.c,  "msm_serial_hs.1"),
+#endif
 #if defined(CONFIG_LGE_BROADCAST_TDMB) || defined(CONFIG_LGE_BROADCAST_ONESEG)
 	CLK_LOOKUP("iface_clk",		gsbi5_p_clk.c,		"spi_qsd.0"),
 #else
 	CLK_LOOKUP("iface_clk",     gsbi5_p_clk.c,      "qup_i2c.5"),
-#endif /* CONFIG_LGE_BROADCAST */
+#endif /*                      */
 
 
-#if !defined(CONFIG_MACH_APQ8064_GVDCM)
+#if !defined(CONFIG_MACH_APQ8064_GVDCM) && !defined(CONFIG_MACH_APQ8064_L05E)
 	/* GJ for Felica/NFC */
 	#if defined(CONFIG_LGE_FELICA) || defined(CONFIG_LGE_NFC_SONY_CXD2235AGG)
 		CLK_LOOKUP("iface_clk",		gsbi6_p_clk.c,	"msm_serial_hsl.2"),
@@ -5455,7 +5469,7 @@ static struct clk_lookup msm_clocks_8064[] = {
 	#elif defined(CONFIG_LGE_BLUESLEEP)
 		CLK_LOOKUP("iface_clk",		gsbi6_p_clk.c,	"msm_serial_hs.0"),
 	#else
-		CLK_LOOKUP("iface_clk",		gsbi6_p_clk.c,	""),
+		CLK_LOOKUP("iface_clk",		gsbi6_p_clk.c,	"msm_serial_hs.0"),
 	#endif
 #else
 	/* GV for Broadcom BCM4334 IC */
@@ -5465,11 +5479,13 @@ static struct clk_lookup msm_clocks_8064[] = {
 	#elif defined(CONFIG_LGE_FELICA) || defined(CONFIG_LGE_NFC_SONY_CXD2235AGG)
 		CLK_LOOKUP("iface_clk",		gsbi6_p_clk.c,	"msm_serial_hsl.2"),
 	#else
-		CLK_LOOKUP("iface_clk",		gsbi6_p_clk.c,	""),
+		CLK_LOOKUP("iface_clk",		gsbi6_p_clk.c,	"msm_serial_hs.0"),
 	#endif
 #endif
 
-#if defined(CONFIG_LGE_IRRC)
+#if  defined (CONFIG_TOUCHSCREEN_S340010_SYNAPTICS_TK) || defined(CONFIG_SND_SOC_TPA2028D_DUAL_SPEAKER)
+	CLK_LOOKUP("iface_clk",		gsbi7_p_clk.c,		"qup_i2c.7"),
+#elif defined(CONFIG_LGE_IRRC)
 	CLK_LOOKUP("iface_clk",		gsbi7_p_clk.c,		"msm_serial_hsl.1"),
 #else
 	CLK_LOOKUP("iface_clk",		gsbi7_p_clk.c,	"msm_serial_hsl.0"),
@@ -5484,7 +5500,7 @@ static struct clk_lookup msm_clocks_8064[] = {
 	CLK_LOOKUP("iface_clk",		sdc2_p_clk.c,		"msm_sdcc.2"),
 	CLK_LOOKUP("iface_clk",		sdc3_p_clk.c,		"msm_sdcc.3"),
 	CLK_LOOKUP("iface_clk",		sdc4_p_clk.c,		"msm_sdcc.4"),
-#ifdef CONFIG_MSM_PCIE //LGE : featuring 
+#ifdef CONFIG_MSM_PCIE
 	CLK_LOOKUP("iface_clk",		pcie_p_clk.c,		"msm_pcie"),
 	CLK_LOOKUP("ref_clk",		pcie_phy_ref_clk.c,	"msm_pcie"),
 	CLK_LOOKUP("bus_clk",		pcie_a_clk.c,		"msm_pcie"),
@@ -5496,23 +5512,31 @@ static struct clk_lookup msm_clocks_8064[] = {
 	CLK_LOOKUP("core_clk",		pmic_ssbi2_clk.c,	""),
 	CLK_LOOKUP("mem_clk",		rpm_msg_ram_p_clk.c,	""),
 #if defined(CONFIG_MACH_LGE)
-/* LGE_CHANGE_S, For GV/GK 13M & 2.4M camera driver, 2012.07.20, gayoung85.lee@lge.com */
-#if defined(CONFIG_MACH_APQ8064_GKKT) ||defined(CONFIG_MACH_APQ8064_GKSK) ||defined(CONFIG_MACH_APQ8064_GKU) ||defined(CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GVDCM) || defined(CONFIG_MACH_APQ8064_GVKT) || defined(CONFIG_MACH_APQ8064_GKGLOBAL)
+/*                                                                                     */
+#if defined(CONFIG_MACH_APQ8064_GKKT) ||defined(CONFIG_MACH_APQ8064_GKSK) ||defined(CONFIG_MACH_APQ8064_GKU) ||defined(CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GVDCM) || defined(CONFIG_MACH_APQ8064_GVKT) || defined(CONFIG_MACH_APQ8064_GKGLOBAL) || defined(CONFIG_MACH_APQ8064_OMEGAR) || defined(CONFIG_MACH_APQ8064_OMEGA)
 	CLK_LOOKUP("cam_clk",		cam0_clk.c,		"4-0078"), /* GSBI4, Slave Addr: 0x78, ce1702 */
 	CLK_LOOKUP("cam_clk",		cam2_clk.c, 		"4-006c"), /* GSBI4, Slave Addr: 0x6e, imx132 */
 #endif
-/* LGE_CHANGE_E, For GV/GK 13M & 2.4M camera driver, 2012.07.20, gayoung85.lee@lge.com */
+/*                                                                                     */
 
-#if 1 //def CONFIG_MACH_APQ8064_J1VD
+//#ifdef CONFIG_MACH_APQ8064_J1VD
+#if defined(CONFIG_MACH_APQ8064_J1V) || defined(CONFIG_MACH_APQ8064_J1U) || defined(CONFIG_MACH_APQ8064_J1A) || defined(CONFIG_MACH_APQ8064_J1SP) || defined(CONFIG_MACH_APQ8064_J1D) || defined(CONFIG_MACH_APQ8064_J1SK) || defined(CONFIG_MACH_APQ8064_J1KT) || defined(CONFIG_MACH_APQ8064_J1KD) || defined(CONFIG_MACH_APQ8064_J1R) || defined(CONFIG_MACH_APQ8064_J1B)|| defined(CONFIG_MACH_APQ8064_J1VD)|| defined(CONFIG_MACH_APQ8064_J1X)|| defined(CONFIG_MACH_APQ8064_J1TL) || defined(CONFIG_MACH_APQ8064_J1TM)
 	CLK_LOOKUP("cam_clk",		cam0_clk.c,		"4-000d"), /* GSBI4, Slave Addr: 0x0d, imx111 */
-/* LGE_CHANGE_S, for old HW (LGU Rev.A,B VZW Rev.A,B ATT Rev.A), 2012.04.27, jungryoul.choi@lge.com */
+/*                                                                                                  */
 #if 1
-	CLK_LOOKUP("cam_clk",		cam2_clk.c,		"4-006e"), /* GSBI4, Slave Addr: 0x6e, imx119 *//* LGE_CHANGE_S, Using MCLK2, soojung.lim@lge.com */
+	CLK_LOOKUP("cam_clk",		cam2_clk.c,		"4-006e"), /* GSBI4, Slave Addr: 0x6e, imx119 *//*                                                */
 #else
-	CLK_LOOKUP("cam_clk",		cam1_clk.c,		"4-006e"), /* GSBI4, Slave Addr: 0x6e, imx119 *//* LGE_CHANGE_S, Using MCLK2, soojung.lim@lge.com */
+	CLK_LOOKUP("cam_clk",		cam1_clk.c,		"4-006e"), /* GSBI4, Slave Addr: 0x6e, imx119 *//*                                                */
 #endif
-/* LGE_CHANGE_S, for old HW (LGU Rev.A,B VZW Rev.A,B ATT Rev.A), 2012.04.27, jungryoul.choi@lge.com */
+/*                                                                                                  */
 #endif
+/*                                                      */
+#if defined(CONFIG_MACH_APQ8064_AWIFI) || defined(CONFIG_MACH_APQ8064_ALTEV)
+	CLK_LOOKUP("cam_clk",		cam0_clk.c,	"4-0020"), /* GSBI4, Slave Addr: 0x20, s5k4e5ya */
+	CLK_LOOKUP("cam_clk",		cam0_clk.c,	"4-0040"), /* GSBI4, Slave Addr: 0x20 << 1, ov5663 *//*                                                                                   */
+	CLK_LOOKUP("cam_clk",		cam2_clk.c,		"4-006e"), /* GSBI4, Slave Addr: 0x6e, imx119 *//*                                                */
+#endif
+/*                                                    */
 #else /* QCT Original */
 	CLK_LOOKUP("cam_clk",		cam0_clk.c,	"4-001a"),
 	CLK_LOOKUP("cam_clk",		cam0_clk.c,	"4-0034"),
@@ -5551,9 +5575,9 @@ static struct clk_lookup msm_clocks_8064[] = {
 	CLK_LOOKUP("npl_clk",		npl_tv_clk.c,		""),
 
 	CLK_LOOKUP("core_clk",		gfx3d_clk.c,	"kgsl-3d0.0"),
-	CLK_LOOKUP("core_clk",		gfx3d_clk.c,	"footswitch-8x60.11"),
+	CLK_LOOKUP("core_clk",		gfx3d_clk.c,	"footswitch-8x60.2"),
 	CLK_LOOKUP("bus_clk",
-			    gfx3d_axi_clk.c, "footswitch-8x60.11"),
+			    gfx3d_axi_clk.c, "footswitch-8x60.2"),
 	CLK_LOOKUP("iface_clk",         vcap_p_clk.c,           ""),
 	CLK_LOOKUP("iface_clk",         vcap_p_clk.c,           "msm_vcap.0"),
 	CLK_LOOKUP("iface_clk",         vcap_p_clk.c,	"footswitch-8x60.10"),
@@ -5607,7 +5631,7 @@ static struct clk_lookup msm_clocks_8064[] = {
 	CLK_LOOKUP("master_iface_clk",	dsi2_m_p_clk.c,		"mipi_dsi.2"),
 	CLK_LOOKUP("slave_iface_clk",	dsi2_s_p_clk.c,		"mipi_dsi.2"),
 	CLK_LOOKUP("iface_clk",		gfx3d_p_clk.c,	"kgsl-3d0.0"),
-	CLK_LOOKUP("iface_clk",		gfx3d_p_clk.c,	"footswitch-8x60.11"),
+	CLK_LOOKUP("iface_clk",		gfx3d_p_clk.c,	"footswitch-8x60.2"),
 	CLK_LOOKUP("master_iface_clk",	hdmi_m_p_clk.c,		"hdmi_msm.1"),
 	CLK_LOOKUP("slave_iface_clk",	hdmi_s_p_clk.c,		"hdmi_msm.1"),
 	CLK_LOOKUP("iface_clk",		ijpeg_p_clk.c,		"msm_gemini.0"),
@@ -5692,6 +5716,7 @@ static struct clk_lookup msm_clocks_8064[] = {
 	CLK_LOOKUP("core_clk",		gfx3d_axi_clk.c,	"msm_iommu.10"),
 
 	CLK_LOOKUP("core_clk",		vcap_axi_clk.c,		"msm_iommu.11"),
+
 	CLK_LOOKUP("mdp_iommu_clk", mdp_axi_clk.c,	"msm_vidc.0"),
 	CLK_LOOKUP("rot_iommu_clk",	rot_axi_clk.c,	"msm_vidc.0"),
 	CLK_LOOKUP("vcodec_iommu0_clk", vcodec_axi_a_clk.c, "msm_vidc.0"),
@@ -5876,15 +5901,22 @@ static struct clk_lookup msm_clocks_8960_common[] __initdata = {
 	CLK_LOOKUP("core_clk",		pmic_ssbi2_clk.c,	""),
 	CLK_LOOKUP("mem_clk",		rpm_msg_ram_p_clk.c,	""),
 #if defined(CONFIG_MACH_LGE)
-/* LGE_CHANGE_S, For GV/GK 13M & 2.4M camera driver, 2012.07.20, gayoung85.lee@lge.com */
+/*                                                                                     */
 #if defined(CONFIG_MACH_APQ8064_GKKT) ||defined(CONFIG_MACH_APQ8064_GKSK) ||defined(CONFIG_MACH_APQ8064_GKU) ||defined(CONFIG_MACH_APQ8064_GKATT) || defined(CONFIG_MACH_APQ8064_GVKT) || defined(CONFIG_MACH_APQ8064_GKGLOBAL)
 	CLK_LOOKUP("cam_clk",		cam0_clk.c, "4-0078"), /* GSBI4, Slave Addr: 0x78, ce1702 */
 	CLK_LOOKUP("cam_clk",		cam1_clk.c, "4-006c"), /* GSBI4, Slave Addr: 0x6c, imx132 */
 #endif
-/* LGE_CHANGE_E, For GV/GK 13M & 2.4M camera driver, 2012.07.20, gayoung85.lee@lge.com */
+/*                                                                                     */
 #ifdef CONFIG_MACH_APQ8064_J1VD
 	CLK_LOOKUP("cam_clk",		cam0_clk.c, "4-000d"), /* GSBI4, Slave Addr: 0x0d, imx111 */
 	CLK_LOOKUP("cam_clk",		cam1_clk.c, "4-006e"), /* GSBI4, Slave Addr: 0x6e, imx119 */
+#endif
+#if defined(CONFIG_MACH_APQ8064_AWIFI) || defined(CONFIG_MACH_APQ8064_ALTEV)
+/*                                                      */
+	CLK_LOOKUP("cam_clk",		cam0_clk.c,	"4-0020"), /* GSBI4, Slave Addr: 0x20, s5k4e5ya */
+	CLK_LOOKUP("cam_clk",		cam0_clk.c,	"4-0040"), /* GSBI4, Slave Addr: 0x20 << 1, ov5693 *//*                                                                                   */
+	CLK_LOOKUP("cam_clk",		cam1_clk.c, 	"4-006e"), /* GSBI4, Slave Addr: 0x6e, imx119 */
+/*                                                    */
 #endif
 #else /* QCT Original */
 	CLK_LOOKUP("cam_clk",		cam0_clk.c,	"4-001a"),
@@ -6169,9 +6201,11 @@ static struct clk_lookup msm_clocks_8930[] = {
 	CLK_LOOKUP("core_clk",		gsbi6_uart_clk.c, "msm_serial_hs.0"),
 	CLK_LOOKUP("core_clk",		gsbi7_uart_clk.c,	""),
 	CLK_LOOKUP("core_clk",		gsbi8_uart_clk.c,	""),
-	CLK_LOOKUP("core_clk",		gsbi9_uart_clk.c,	""),
-	CLK_LOOKUP("core_clk",		gsbi10_uart_clk.c,	""),
-	CLK_LOOKUP("core_clk",		gsbi11_uart_clk.c,	""),
+	/* used on 8930 SGLTE for Primary IPC */
+	CLK_LOOKUP("core_clk",		gsbi9_uart_clk.c, "msm_serial_hs.1"),
+	 /* used on 8930 SGLTE for serial console */
+	CLK_LOOKUP("core_clk",		gsbi10_uart_clk.c, "msm_serial_hsl.1"),
+	CLK_LOOKUP("core_clk",		gsbi11_uart_clk.c, "msm_serial_hsl.2"),
 	CLK_LOOKUP("core_clk",		gsbi12_uart_clk.c,	""),
 	CLK_LOOKUP("core_clk",		gsbi1_qup_clk.c,	"spi_qsd.0"),
 	CLK_LOOKUP("core_clk",		gsbi2_qup_clk.c,	""),
@@ -6180,7 +6214,7 @@ static struct clk_lookup msm_clocks_8930[] = {
 	CLK_LOOKUP("core_clk",		gsbi5_qup_clk.c,	""),
 	CLK_LOOKUP("core_clk",		gsbi6_qup_clk.c,	""),
 	CLK_LOOKUP("core_clk",		gsbi7_qup_clk.c,	""),
-	CLK_LOOKUP("core_clk",		gsbi8_qup_clk.c,	""),
+	CLK_LOOKUP("core_clk",		gsbi8_qup_clk.c,	"qup_i2c.8"),
 	CLK_LOOKUP("core_clk",		gsbi9_qup_clk.c,	"qup_i2c.0"),
 	CLK_LOOKUP("core_clk",		gsbi10_qup_clk.c,	"qup_i2c.10"),
 	CLK_LOOKUP("core_clk",		gsbi11_qup_clk.c,	""),
@@ -6220,10 +6254,15 @@ static struct clk_lookup msm_clocks_8930[] = {
 	CLK_LOOKUP("iface_clk",		gsbi5_p_clk.c,	"msm_serial_hsl.0"),
 	CLK_LOOKUP("iface_clk",		gsbi6_p_clk.c,  "msm_serial_hs.0"),
 	CLK_LOOKUP("iface_clk",		gsbi7_p_clk.c,		""),
-	CLK_LOOKUP("iface_clk",		gsbi8_p_clk.c,		""),
+	/* used on 8930 SGLTE for Camera */
+	CLK_LOOKUP("iface_clk",		gsbi8_p_clk.c,		"qup_i2c.8"),
+	/* used on 8930 SGLTE for Primary IPC */
+	CLK_LOOKUP("iface_clk",         gsbi9_p_clk.c,	"msm_serial_hs.1"),
 	CLK_LOOKUP("iface_clk",		gsbi9_p_clk.c,		"qup_i2c.0"),
 	CLK_LOOKUP("iface_clk",		gsbi10_p_clk.c,		"qup_i2c.10"),
-	CLK_LOOKUP("iface_clk",		gsbi11_p_clk.c,		""),
+	/* used on 8930 SGLTE for serial console */
+	CLK_LOOKUP("iface_clk",         gsbi10_p_clk.c, "msm_serial_hsl.1"),
+	CLK_LOOKUP("iface_clk",		gsbi11_p_clk.c,	"msm_serial_hsl.2"),
 	CLK_LOOKUP("iface_clk",		gsbi12_p_clk.c,		"qup_i2c.12"),
 	CLK_LOOKUP("iface_clk",		tsif_p_clk.c,		""),
 	CLK_LOOKUP("iface_clk",		usb_fs1_p_clk.c,	""),
@@ -6245,6 +6284,13 @@ static struct clk_lookup msm_clocks_8930[] = {
 	CLK_LOOKUP("cam_clk",		cam1_clk.c,	"4-0048"),
 	CLK_LOOKUP("cam_clk",		cam2_clk.c,		NULL),
 	CLK_LOOKUP("cam_clk",		cam0_clk.c,	"4-0020"),
+	CLK_LOOKUP("cam_clk",		cam0_clk.c,	"8-001a"),
+	CLK_LOOKUP("cam_clk",		cam0_clk.c,	"8-0036"),
+	CLK_LOOKUP("cam_clk",		cam1_clk.c,	"8-006c"),
+	CLK_LOOKUP("cam_clk",		cam1_clk.c,	"8-0010"),
+	CLK_LOOKUP("cam_clk",		cam1_clk.c,	"8-0048"),
+	CLK_LOOKUP("cam_clk",		cam2_clk.c,		NULL),
+	CLK_LOOKUP("cam_clk",		cam0_clk.c,	"8-0020"),
 	CLK_LOOKUP("csi_src_clk",	csi0_src_clk.c,		"msm_csid.0"),
 	CLK_LOOKUP("csi_src_clk",	csi1_src_clk.c,		"msm_csid.1"),
 	CLK_LOOKUP("csi_src_clk",	csi2_src_clk.c,		"msm_csid.2"),
@@ -6511,12 +6557,12 @@ static void __init reg_init(void)
 	 */
 	/*
 	 * Initialize MM AHB registers: Enable the FPB clock and disable HW
-	 * gating on 8627 and 8960 for all clocks. Also set VFE_AHB's
+	 * gating on 8627 and 8930ab for all clocks. Also set VFE_AHB's
 	 * FORCE_CORE_ON bit to prevent its memory from being collapsed when
 	 * the clock is halted. The sleep and wake-up delays are set to safe
 	 * values.
 	 */
-	if (cpu_is_msm8627() || cpu_is_msm8960ab()) {
+	if (cpu_is_msm8627() || cpu_is_msm8930ab()) {
 		rmwreg(0x00000003, AHB_EN_REG,  0x6C000103);
 		writel_relaxed(0x000007F9, AHB_EN2_REG);
 	} else {
@@ -6524,7 +6570,7 @@ static void __init reg_init(void)
 		writel_relaxed(0x3C7097F9, AHB_EN2_REG);
 	}
 
-	if (cpu_is_apq8064() || cpu_is_apq8064ab())
+	if (soc_class_is_apq8064())
 		rmwreg(0x00000000, AHB_EN3_REG, 0x00000001);
 
 	/* Deassert all locally-owned MM AHB resets. */
@@ -6534,9 +6580,9 @@ static void __init reg_init(void)
 	/* Initialize MM AXI registers: Enable HW gating for all clocks that
 	 * support it. Also set FORCE_CORE_ON bits, and any sleep and wake-up
 	 * delays to safe values. */
-	if (cpu_is_msm8960ab() || (cpu_is_msm8960() &&
+	if ((cpu_is_msm8960() &&
 			SOCINFO_VERSION_MAJOR(socinfo_get_version()) < 3) ||
-			cpu_is_msm8627()) {
+			cpu_is_msm8627() || cpu_is_msm8930ab()) {
 		rmwreg(0x000007F9, MAXI_EN_REG,  0x0803FFFF);
 		rmwreg(0x3027FCFF, MAXI_EN2_REG, 0x3A3FFFFF);
 	} else {
@@ -6547,17 +6593,16 @@ static void __init reg_init(void)
 	rmwreg(0x0027FCFF, MAXI_EN3_REG, 0x003FFFFF);
 	rmwreg(0x0027FCFF, MAXI_EN4_REG, 0x017FFFFF);
 
-	if (cpu_is_apq8064() || cpu_is_apq8064ab())
+	if (soc_class_is_apq8064())
 		rmwreg(0x019FECFF, MAXI_EN5_REG, 0x01FFEFFF);
-	if (cpu_is_msm8930() || cpu_is_msm8930aa() || cpu_is_msm8627())
+	if (cpu_is_msm8930() || cpu_is_msm8930aa() || cpu_is_msm8627() ||
+	    cpu_is_msm8930ab())
 		rmwreg(0x000004FF, MAXI_EN5_REG, 0x00000FFF);
 	if (cpu_is_msm8960ab())
 		rmwreg(0x009FE000, MAXI_EN5_REG, 0x01FFE000);
 
-	if (cpu_is_msm8627())
+	if (cpu_is_msm8627() || cpu_is_msm8930ab())
 		rmwreg(0x000003C7, SAXI_EN_REG,  0x00003FFF);
-	else if (cpu_is_msm8960ab())
-		rmwreg(0x000001C6, SAXI_EN_REG,  0x00001DF6);
 	else
 		rmwreg(0x00003C38, SAXI_EN_REG,  0x00003FFF);
 
@@ -6585,8 +6630,7 @@ static void __init reg_init(void)
 	rmwreg(0x80FF0000, VFE_CC_REG,        0xE0FF4010);
 	rmwreg(0x800000FF, VFE_CC2_REG,       0xE00000FF);
 	rmwreg(0x80FF0000, VPE_CC_REG,        0xE0FF0010);
-	if (cpu_is_msm8960ab() || cpu_is_msm8960() || cpu_is_apq8064()
-		 || cpu_is_apq8064ab()) {
+	if (cpu_is_msm8960ab() || cpu_is_msm8960() || soc_class_is_apq8064()) {
 		rmwreg(0x80FF0000, DSI2_BYTE_CC_REG,  0xE0FF0010);
 		rmwreg(0x80FF0000, DSI2_PIXEL_CC_REG, 0xE0FF0010);
 		rmwreg(0x80FF0000, JPEGD_CC_REG,      0xE0FF0010);
@@ -6595,7 +6639,7 @@ static void __init reg_init(void)
 		rmwreg(0x00000001, DSI2_PIXEL_CC2_REG, 0x00000001);
 
 	if (cpu_is_msm8960() || cpu_is_msm8930() || cpu_is_msm8930aa() ||
-	    cpu_is_msm8627())
+	    cpu_is_msm8627() || cpu_is_msm8930ab())
 		rmwreg(0x80FF0000, TV_CC_REG,        0xE1FFC010);
 	if (cpu_is_msm8960ab())
 		rmwreg(0x00000000, TV_CC_REG,        0x00004010);
@@ -6604,7 +6648,7 @@ static void __init reg_init(void)
 		rmwreg(0x80FF0000, GFX2D0_CC_REG,     0xE0FF0010);
 		rmwreg(0x80FF0000, GFX2D1_CC_REG,     0xE0FF0010);
 	}
-	if (cpu_is_apq8064() || cpu_is_apq8064ab()) {
+	if (soc_class_is_apq8064()) {
 		rmwreg(0x00000000, TV_CC_REG,         0x00004010);
 		rmwreg(0x80FF0000, VCAP_CC_REG,       0xE0FF1010);
 	}
@@ -6615,7 +6659,7 @@ static void __init reg_init(void)
 	 * and wake-up value to max.
 	 */
 	rmwreg(0x0000004F, USB_HS1_HCLK_FS_REG, 0x0000007F);
-	if (cpu_is_apq8064() || cpu_is_apq8064ab()) {
+	if (soc_class_is_apq8064()) {
 		rmwreg(0x0000004F, USB_HS3_HCLK_FS_REG, 0x0000007F);
 		rmwreg(0x0000004F, USB_HS4_HCLK_FS_REG, 0x0000007F);
 	}
@@ -6637,8 +6681,7 @@ static void __init reg_init(void)
 
 	/* Source the dsi_byte_clks from the DSI PHY PLLs */
 	rmwreg(0x1, DSI1_BYTE_NS_REG, 0x7);
-	if (cpu_is_msm8960ab() || cpu_is_msm8960() || cpu_is_apq8064()
-		|| cpu_is_apq8064ab())
+	if (cpu_is_msm8960ab() || cpu_is_msm8960() || soc_class_is_apq8064())
 		rmwreg(0x2, DSI2_BYTE_NS_REG, 0x7);
 
 	/* Source the dsi1_esc_clk from the DSI1 PHY PLLs */
@@ -6648,7 +6691,7 @@ static void __init reg_init(void)
 	 * Source the sata_phy_ref_clk from PXO and set predivider of
 	 * sata_pmalive_clk to 1.
 	 */
-	if (cpu_is_apq8064() || cpu_is_apq8064ab()) {
+	if (soc_class_is_apq8064()) {
 		rmwreg(0, SATA_PHY_REF_CLK_CTL_REG, 0x1);
 		rmwreg(0, SATA_PMALIVE_CLK_CTL_REG, 0x3);
 	}
@@ -6657,7 +6700,7 @@ static void __init reg_init(void)
 	 * TODO: Programming below PLLs and prng_clk is temporary and
 	 *	 needs to be removed after bootloaders program them.
 	 */
-	if (cpu_is_apq8064() || cpu_is_apq8064ab()) {
+	if (soc_class_is_apq8064()) {
 		u32 is_pll_enabled;
 
 		/* Program pxo_src_clk to source from PXO */
@@ -6686,7 +6729,7 @@ static void __init reg_init(void)
 			writel_relaxed(0x2B, PRNG_CLK_NS_REG);
 	}
 
-	if (cpu_is_apq8064()) {
+	if (cpu_is_apq8064() || cpu_is_apq8064aa()) {
 		/* Program PLL15 to 975MHz with ref clk = 27MHz */
 		configure_sr_pll(&pll15_config, &pll15_regs, 0);
 	} else if (cpu_is_apq8064ab()) {
@@ -6698,13 +6741,19 @@ static void __init reg_init(void)
 	}
 
 	/*
-	 * Program PLL15 to 900MHz with ref clk = 27MHz and
-	 * only enable PLL main output.
+	 * Change PLL15 configuration based on the SoC we're running on.
 	 */
 	if (cpu_is_msm8930() || cpu_is_msm8930aa() || cpu_is_msm8627()) {
 		pll15_config.l = 0x21 | BVAL(31, 7, 0x600);
 		pll15_config.m = 0x1;
 		pll15_config.n = 0x3;
+		configure_sr_pll(&pll15_config, &pll15_regs, 0);
+		/* Disable AUX and BIST outputs */
+		writel_relaxed(0, MM_PLL3_TEST_CTL_REG);
+	} else if (cpu_is_msm8930ab()) {
+		pll15_config.l = 0x25 | BVAL(31, 7, 0x600);
+		pll15_config.m = 0x25;
+		pll15_config.n = 0x3E7;
 		configure_sr_pll(&pll15_config, &pll15_regs, 0);
 		/* Disable AUX and BIST outputs */
 		writel_relaxed(0, MM_PLL3_TEST_CTL_REG);
@@ -6717,7 +6766,7 @@ static void __init msm8960_clock_pre_init(void)
 	/* Initialize clock registers. */
 	reg_init();
 
-	if (cpu_is_apq8064() || cpu_is_apq8064ab())
+	if (soc_class_is_apq8064())
 		vdd_sr2_hdmi_pll.set_vdd = set_vdd_sr2_hdmi_pll_8064;
 
 	/* Detect PLL4 programmed for alternate 491.52MHz clock plan. */
@@ -6761,7 +6810,7 @@ static void __init msm8960_clock_pre_init(void)
 	 * Change the freq tables for and voltage requirements for
 	 * clocks which differ between chips.
 	 */
-	if (cpu_is_apq8064()) {
+	if (cpu_is_apq8064() || cpu_is_apq8064aa()) {
 		gfx3d_clk.c.fmax = fmax_gfx3d_8064;
 	}
 	if (cpu_is_apq8064ab()) {
@@ -6769,13 +6818,13 @@ static void __init msm8960_clock_pre_init(void)
 	}
 	if ((cpu_is_apq8064() &&
 		SOCINFO_VERSION_MAJOR(socinfo_get_version()) == 2) ||
-		cpu_is_apq8064ab()) {
+		cpu_is_apq8064ab() || cpu_is_apq8064aa()) {
 
 		vcodec_clk.c.fmax = fmax_vcodec_8064v2;
 		ce3_src_clk.c.fmax = fmax_ce3_8064v2;
 		sdc1_clk.c.fmax = fmax_sdc1_8064v2;
 	}
-	if (cpu_is_apq8064() || cpu_is_apq8064ab()) {
+	if (soc_class_is_apq8064()) {
 		ijpeg_clk.c.fmax = fmax_ijpeg_8064;
 		mdp_clk.c.fmax = fmax_mdp_8064;
 		tv_src_clk.c.fmax = fmax_tv_src_8064;
@@ -6787,14 +6836,19 @@ static void __init msm8960_clock_pre_init(void)
 	 * Change the freq tables and voltage requirements for
 	 * clocks which differ between 8960 and 8930.
 	 */
-	if (cpu_is_msm8930() || cpu_is_msm8627()) {
+	if (cpu_is_msm8930() || cpu_is_msm8627())
 		gfx3d_clk.c.fmax = fmax_gfx3d_8930;
-	} else if (cpu_is_msm8930aa()) {
+	else if (cpu_is_msm8930aa())
 		gfx3d_clk.c.fmax = fmax_gfx3d_8930aa;
-	}
 	if (cpu_is_msm8930() || cpu_is_msm8930aa() || cpu_is_msm8627()) {
 		pll15_clk.c.rate = 900000000;
 		gmem_axi_clk.c.depends = &gfx3d_axi_clk_8930.c;
+	} else if (cpu_is_msm8930ab()) {
+		gfx3d_clk.freq_tbl = clk_tbl_gfx3d_8930ab;
+		pll15_clk.c.rate = 1000000000;
+		gfx3d_clk.c.fmax = fmax_gfx3d_8930ab;
+		gmem_axi_clk.c.depends = &gfx3d_axi_clk_8930.c;
+		vcodec_clk.c.fmax = fmax_vcodec_8930ab;
 	}
 	if ((readl_relaxed(PRNG_CLK_NS_REG) & 0x7F) == 0x2B)
 		prng_clk.freq_tbl = clk_tbl_prng_64;
@@ -6843,13 +6897,13 @@ static void __init msm8960_clock_post_init(void)
 	clk_set_rate(&tsif_ref_clk.c, 105000);
 	clk_set_rate(&tssc_clk.c, 27000000);
 	clk_set_rate(&usb_hs1_xcvr_clk.c, 60000000);
-	if (cpu_is_apq8064() || cpu_is_apq8064ab()) {
+	if (soc_class_is_apq8064()) {
 		clk_set_rate(&usb_hs3_xcvr_clk.c, 60000000);
 		clk_set_rate(&usb_hs4_xcvr_clk.c, 60000000);
 	}
 	clk_set_rate(&usb_fs1_src_clk.c, 60000000);
 	if (cpu_is_msm8960ab() || cpu_is_msm8960() || cpu_is_msm8930() ||
-		cpu_is_msm8930aa() || cpu_is_msm8627())
+		cpu_is_msm8930aa() || cpu_is_msm8627() || cpu_is_msm8930ab())
 		clk_set_rate(&usb_fs2_src_clk.c, 60000000);
 	clk_set_rate(&usb_hsic_xcvr_fs_clk.c, 60000000);
 	clk_set_rate(&usb_hsic_hsic_src_clk.c, 480000000);

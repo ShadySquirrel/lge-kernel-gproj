@@ -53,7 +53,7 @@ static int ion_system_heap_allocate(struct ion_heap *heap,
 		goto err0;
 	for_each_sg(table->sgl, sg, table->nents, i) {
 		struct page *page;
-		page = alloc_page(GFP_KERNEL|__GFP_ZERO);
+		page = alloc_page(GFP_KERNEL);
 		if (!page)
 			goto err1;
 		sg_set_page(sg, page, PAGE_SIZE, 0);
@@ -304,8 +304,9 @@ int ion_system_heap_map_iommu(struct ion_buffer *buffer,
 
 	extra_iova_addr = data->iova_addr + buffer->size;
 	if (extra) {
-		ret = msm_iommu_map_extra(domain, extra_iova_addr, extra, SZ_4K,
-					  prot);
+		unsigned long phys_addr = sg_phys(table->sgl);
+		ret = msm_iommu_map_extra(domain, extra_iova_addr, phys_addr,
+					extra, SZ_4K, prot);
 		if (ret)
 			goto out2;
 	}
@@ -524,8 +525,9 @@ int ion_system_contig_heap_map_iommu(struct ion_buffer *buffer,
 
 	if (extra) {
 		unsigned long extra_iova_addr = data->iova_addr + buffer->size;
-		ret = msm_iommu_map_extra(domain, extra_iova_addr, extra, SZ_4K,
-					  prot);
+		unsigned long phys_addr = sg_phys(sglist);
+		ret = msm_iommu_map_extra(domain, extra_iova_addr, phys_addr,
+					extra, SZ_4K, prot);
 		if (ret)
 			goto out2;
 	}

@@ -23,19 +23,23 @@ int felica_uart_open(void)
     struct termios newtio;
     mm_segment_t old_fs = get_fs();
 
-#ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_LOW
     FELICA_DEBUG_MSG("[FELICA_UART] open_hs_uart - start \n");
-#endif
+    #endif
 
     if(FELICA_UART_NOTAVAILABLE == get_felica_uart_status())
     {
+      #ifdef FEATURE_DEBUG_HIGH
       FELICA_DEBUG_MSG("[FELICA_UART] collision!! uart is used by other device \n");
+	  #endif
       return -1;
     }
 
     if (uart_f != NULL)
     {
+        #ifdef FEATURE_DEBUG_HIGH
         FELICA_DEBUG_MSG("[FELICA_UART] felica_uart is already opened\n");
+		#endif
         return 0;
     }
 
@@ -43,13 +47,15 @@ int felica_uart_open(void)
 
     uart_f = filp_open(FELICA_UART_NAME, O_RDWR | O_NOCTTY | O_NONBLOCK, 0);
 
-#ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_LOW
     FELICA_DEBUG_MSG("[FELICA_UART] open UART\n");
-#endif
+    #endif
 
     if (uart_f == NULL)
     {
+        #ifdef FEATURE_DEBUG_HIGH
         FELICA_DEBUG_MSG("[FELICA_UART] ERROR - can not sys_open \n");
+		#endif
         set_fs(old_fs);
         return -1;
     }
@@ -65,9 +71,9 @@ int felica_uart_open(void)
 
     set_fs(old_fs);
 
-#ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_LOW
     FELICA_DEBUG_MSG("[FELICA_UART] open_hs_uart - end \n");
-#endif
+    #endif
 
     return 0;
 }
@@ -81,13 +87,15 @@ int felica_uart_close(void)
 {
     mm_segment_t old_fs = get_fs();
 
-#ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_LOW
     FELICA_DEBUG_MSG("[FELICA_UART] close_hs_uart - start \n");
-#endif
+    #endif
 
     if (uart_f == NULL)
     {
-        FELICA_DEBUG_MSG("[FELICA_UART] felica_uart is not opened\n");
+        #ifdef FEATURE_DEBUG_HIGH
+        FELICA_DEBUG_MSG("[FELICA_UART] felica_uart is not opened \n");
+		#endif
         return 0;
     }
 
@@ -98,9 +106,9 @@ int felica_uart_close(void)
     uart_f = NULL;
     set_fs(old_fs);
 
-#ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_LOW
     FELICA_DEBUG_MSG("[FELICA_UART] close_hs_uart - end \n");
-#endif
+    #endif
 
     return 0;
 }
@@ -115,26 +123,28 @@ int felica_uart_write(char *buf, size_t count)
     mm_segment_t old_fs = get_fs();
     int n;
 
-#ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_LOW
     FELICA_DEBUG_MSG("[FELICA_UART] write_hs_uart - start \n");
-#endif
+    #endif
 
     if (uart_f == NULL)
     {
+        #ifdef FEATURE_DEBUG_HIGH
         FELICA_DEBUG_MSG("[FELICA_UART] felica_uart is not opened\n");
+		#endif
         return 0;
     }
 
     set_fs(KERNEL_DS);
     n = vfs_write(uart_f, buf, count, &uart_f->f_pos);
-#ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_LOW
     FELICA_DEBUG_MSG("[FELICA_UART] write_hs_uart - write (%d)\n", n);
-#endif
+    #endif
     set_fs(old_fs);
 
-#ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_LOW
     FELICA_DEBUG_MSG("[FELICA_UART] write_hs_uart - end \n");
-#endif
+    #endif
 
     return n;
 }
@@ -149,14 +159,16 @@ int felica_uart_read(char *buf, size_t count)
     mm_segment_t old_fs = get_fs();
     int n;
     int retry = 5;
-
-#ifdef FEATURE_DEBUG_LOW
+    
+    #ifdef FEATURE_DEBUG_LOW
     FELICA_DEBUG_MSG("[FELICA_UART] read_hs_uart - start \n");
-#endif
+    #endif
 
     if (uart_f == NULL)
     {
+        #ifdef FEATURE_DEBUG_HIGH
         FELICA_DEBUG_MSG("[FELICA_UART] felica_uart is not opened\n");
+		#endif
         return 0;
     }
 
@@ -165,22 +177,22 @@ int felica_uart_read(char *buf, size_t count)
     while ((n = vfs_read(uart_f, buf, count, &uart_f->f_pos)) == -EAGAIN && retry > 0)
     {
         mdelay(10);
-#ifdef FEATURE_DEBUG_LOW
+        #ifdef FEATURE_DEBUG_MED
         FELICA_DEBUG_MSG("[FELICA_UART] felica_uart_read - delay : %d \n", retry);
-#endif
+        #endif
         retry--;
     }
 
 
-#ifdef FEATURE_DEBUG_LOW
-    FELICA_DEBUG_MSG("[FELICA_UART] read_hs_uart - count : %d numofreaddata : %d\n",count ,n);
-#endif
+    #ifdef FEATURE_DEBUG_MED
+    FELICA_DEBUG_MSG("[FELICA_UART] read_hs_uart - count(%d), num of read data(%d) \n",count ,n);
+    #endif
 
     set_fs(old_fs);
 
-#ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_LOW
     FELICA_DEBUG_MSG("[FELICA_UART] read_hs_uart - end \n");
-#endif
+    #endif
 
     return n;
 }
@@ -194,26 +206,28 @@ int felica_uart_ioctrl(int *count)
     mm_segment_t old_fs = get_fs();
     int n;
 
-#ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_LOW
     FELICA_DEBUG_MSG("[FELICA_UART] felica_uart_ioctrl - start \n");
-#endif
+    #endif
 
     if (uart_f == NULL)
     {
+        #ifdef FEATURE_DEBUG_HIGH
         FELICA_DEBUG_MSG("[FELICA_UART] felica_uart is not opened\n");
+		#endif
         return 0;
     }
 
     set_fs(KERNEL_DS);
     n = do_vfs_ioctl(uart_f, -1, TIOCINQ, (unsigned long)count);
-#ifdef FEATURE_DEBUG_LOW
-    FELICA_DEBUG_MSG("[FELICA_UART] do_vfs_ioctl return %d, count=%d\n", n, *count);
-#endif
+    #ifdef FEATURE_DEBUG_MED
+    FELICA_DEBUG_MSG("[FELICA_UART] do_vfs_ioctl return(%d), count(%d) \n", n, *count);
+    #endif
     set_fs(old_fs);
 
-#ifdef FEATURE_DEBUG_LOW
+    #ifdef FEATURE_DEBUG_LOW
     FELICA_DEBUG_MSG("[FELICA_UART] felica_uart_ioctrl - end \n");
-#endif
+    #endif
 
     return n;
 }

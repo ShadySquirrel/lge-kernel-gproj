@@ -35,12 +35,13 @@
 
 #include <mach/msm_smd.h>
 #include <mach/peripheral-loader.h>
+#include <mach/msm_ipc_logging.h>
 
 #include "smd_private.h"
 #ifdef CONFIG_ARCH_FSM9XXX
 #define NUM_SMD_PKT_PORTS 4
 #else
-#define NUM_SMD_PKT_PORTS 15
+#define NUM_SMD_PKT_PORTS 24
 #endif
 
 #define PDRIVER_NAME_MAX_SIZE 32
@@ -49,14 +50,11 @@
 #define DEVICE_NAME "smdpkt"
 #define WAKELOCK_TIMEOUT (2*HZ)
 
-#define SMD_PKT_MAGIC (0xDEADBAAD)
-
 struct smd_pkt_dev {
 	struct cdev cdev;
 	struct device *devicep;
 	void *pil;
 	char pdriver_name[PDRIVER_NAME_MAX_SIZE];
-	int magic;
 	struct platform_driver driver;
 
 	struct smd_channel *ch;
@@ -111,7 +109,7 @@ enum {
 #define DEBUG
 
 #ifdef DEBUG
-#define D_STATUS(x...) \
+
 #define SMD_PKT_LOG_STRING(x...) \
 do { \
 	if (smd_pkt_ilctxt) \
@@ -647,9 +645,8 @@ static void ch_notify(void *priv, unsigned event)
 	struct smd_pkt_dev *smd_pkt_devp = priv;
 
 	if (smd_pkt_devp->ch == 0) {
-		if (event != SMD_EVENT_CLOSE)
-			pr_err("%s on a closed smd_pkt_dev id:%d\n",
-					__func__, smd_pkt_devp->i);
+		pr_err("%s on a closed smd_pkt_dev id:%d\n",
+			__func__, smd_pkt_devp->i);
 		return;
 	}
 
@@ -829,6 +826,8 @@ int smd_pkt_open(struct inode *inode, struct file *file)
 	}
 	D_STATUS("Begin %s on smd_pkt_dev id:%d\n", __func__, smd_pkt_devp->i);
 
+	file->private_data = smd_pkt_devp;
+
 	mutex_lock(&smd_pkt_devp->ch_lock);
 	if (smd_pkt_devp->ch == 0) {
 		wake_lock_init(&smd_pkt_devp->pa_wake_lock, WAKE_LOCK_SUSPEND,
@@ -943,8 +942,6 @@ release_pd:
 		platform_driver_unregister(&smd_pkt_devp->driver);
 		smd_pkt_devp->driver.probe = NULL;
 	}
-	else if (r == 0)
-		file->private_data = smd_pkt_devp;
 out:
 	if (!smd_pkt_devp->ch)
 		wake_lock_destroy(&smd_pkt_devp->pa_wake_lock);
@@ -979,14 +976,8 @@ int smd_pkt_release(struct inode *inode, struct file *file)
 		smd_pkt_devp->ch = 0;
 		smd_pkt_devp->blocking_write = 0;
 		smd_pkt_devp->poll_mode = 0;
-		if (smd_pkt_devp->driver.probe) {
-			platform_driver_unregister(&smd_pkt_devp->driver);
-			smd_pkt_devp->driver.probe = NULL;
-		} else {
-			pr_err("%s: invalid unregister dev id:%d magic %x\n",
-					 __func__, smd_pkt_devp->i,
-					smd_pkt_devp->magic);
-		}
+		platform_driver_unregister(&smd_pkt_devp->driver);
+		smd_pkt_devp->driver.probe = NULL;
 		if (smd_pkt_devp->pil)
 			pil_put(smd_pkt_devp->pil);
 		smd_pkt_devp->has_reset = 0;
@@ -1037,6 +1028,9 @@ static int __init smd_pkt_init(void)
 	}
 
 	for (i = 0; i < NUM_SMD_PKT_PORTS; ++i) {
+#if defined (CONFIG_BCMDHD) && !defined (CONFIG_WCNSS_CORE) && defined (CONFIG_MACH_APQ8064_GVAR_CMCC) //for wifi changed by wo0ngs,  2013-04-26
+		if (smd_ch_edge[i]  != SMD_APPS_WCNSS) {
+#endif			
 		smd_pkt_devp[i] = kzalloc(sizeof(struct smd_pkt_dev),
 					 GFP_KERNEL);
 		if (IS_ERR(smd_pkt_devp[i])) {
@@ -1053,7 +1047,6 @@ static int __init smd_pkt_init(void)
 		smd_pkt_devp[i]->is_open = 0;
 		smd_pkt_devp[i]->poll_mode = 0;
 		smd_pkt_devp[i]->wakelock_locked = 0;
-		smd_pkt_devp[i]->magic = SMD_PKT_MAGIC;
 		init_waitqueue_head(&smd_pkt_devp[i]->ch_opened_wait_queue);
 
 		spin_lock_init(&smd_pkt_devp[i]->pa_spinlock);
@@ -1094,8 +1087,13 @@ static int __init smd_pkt_init(void)
 					&dev_attr_open_timeout))
 			pr_err("%s: unable to create device attr for"
 			       " smd_pkt_dev id:%d\n", __func__, i);
+#if defined (CONFIG_BCMDHD) && !defined (CONFIG_WCNSS_CORE) && defined (CONFIG_MACH_APQ8064_GVAR_CMCC) //for wifi changed by wo0ngs,  2013-04-26
 	}
-
+	else {
+		pr_err("%s: brcm except  SMD_APPS_WCNSS cdev id: %d\n", __func__, i);
+	}
+#endif
+	}
 	INIT_DELAYED_WORK(&loopback_work, loopback_probe_worker);
 
 	smd_pkt_ilctxt = ipc_log_context_create(SMD_PKT_IPC_LOG_PAGE_CNT,
@@ -1127,7 +1125,6 @@ static void __exit smd_pkt_cleanup(void)
 
 	for (i = 0; i < NUM_SMD_PKT_PORTS; ++i) {
 		cdev_del(&smd_pkt_devp[i]->cdev);
-		smd_pkt_devp[i]->magic = 0;
 		kfree(smd_pkt_devp[i]);
 		device_destroy(smd_pkt_classp,
 			       MKDEV(MAJOR(smd_pkt_number), i));

@@ -24,6 +24,7 @@
 #include <linux/list.h>
 #include <linux/memblock.h>
 #include <linux/miscdevice.h>
+#include <linux/export.h>
 #include <linux/mm.h>
 #include <linux/mm_types.h>
 #include <linux/rbtree.h>
@@ -502,6 +503,11 @@ void ion_free(struct ion_client *client, struct ion_handle *handle)
 {
 	bool valid_handle;
 
+    if(IS_ERR_OR_NULL(handle)) {
+        pr_err("%s: handle pointer is invalid\n", __func__) ;
+        return;
+    }
+
 	BUG_ON(client != handle->client);
 
 	mutex_lock(&client->lock);
@@ -788,12 +794,13 @@ void ion_unmap_iommu(struct ion_client *client, struct ion_handle *handle,
 	kref_put(&iommu_map->ref, ion_iommu_release);
 
 	buffer->iommu_map_cnt--;
+
 out:
 	mutex_unlock(&buffer->lock);
 
 	mutex_unlock(&client->lock);
-
 }
+
 EXPORT_SYMBOL(ion_unmap_iommu);
 
 void *ion_map_kernel(struct ion_client *client, struct ion_handle *handle)
@@ -1362,24 +1369,6 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		}
 		break;
 	}
-	case ION_IOC_ALLOC_COMPAT:
-	{
-		struct ion_allocation_data_old data;
-
-		if (copy_from_user(&data, (void __user *)arg, sizeof(data)))
-			return -EFAULT;
-		data.handle = ion_alloc(client, data.len, data.align,
-				data.flags, data.flags);
-
-		if (IS_ERR(data.handle))
-			return PTR_ERR(data.handle);
-
-		if (copy_to_user((void __user *)arg, &data, sizeof(data))) {
-			ion_free(client, data.handle);
-			return -EFAULT;
-		}
-		break;
-	}
 	case ION_IOC_FREE:
 	{
 		struct ion_handle_data data;
@@ -1447,19 +1436,15 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		return dev->custom_ioctl(client, data.cmd, data.arg);
 	}
 	case ION_IOC_CLEAN_CACHES:
-	case ION_IOC_CLEAN_CACHES_COMPAT:
 		return client->dev->custom_ioctl(client,
 						ION_IOC_CLEAN_CACHES, arg);
 	case ION_IOC_INV_CACHES:
-	case ION_IOC_INV_CACHES_COMPAT:
 		return client->dev->custom_ioctl(client,
 						ION_IOC_INV_CACHES, arg);
 	case ION_IOC_CLEAN_INV_CACHES:
-	case ION_IOC_CLEAN_INV_CACHES_COMPAT:
 		return client->dev->custom_ioctl(client,
 						ION_IOC_CLEAN_INV_CACHES, arg);
 	case ION_IOC_GET_FLAGS:
-	case ION_IOC_GET_FLAGS_COMPAT:
 		return client->dev->custom_ioctl(client,
 						ION_IOC_GET_FLAGS, arg);
 	default:

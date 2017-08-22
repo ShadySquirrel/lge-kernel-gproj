@@ -1,4 +1,4 @@
-/* Copyright (c) 2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2011, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -23,6 +23,9 @@
 #define SUB_UNAB_THD	0x0120
 #define SUB_RESET_SOC	0x0130
 #define SUB_UNKNOWN	0x0140
+#ifdef CONFIG_RTC_PWROFF_ALARM
+#define LGE_BOOT_CHG_RTC_PWR		0xc423
+#endif
 #endif
 
 #if defined(CONFIG_MSM_NATIVE_RESTART)

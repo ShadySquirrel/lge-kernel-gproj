@@ -39,7 +39,7 @@ enum{
   FELICA_UART_AVAILABLE,
 };
 
-//Check NFC code - drivers/nfc/snfc
+/* Check NFC code - drivers/nfc/snfc */
 typedef enum _e_snfc_uart_status {
 	UART_STATUS_KOTO_OFF = 0,
 	UART_STATUS_READY,
@@ -56,27 +56,23 @@ typedef enum _e_snfc_i2c_status {
              I2C_STATUS_NONE,
 } _e_snfc_i2c_status;
 
-/* common */
+
 /* function feature */
-/* Only for L-01E DCM */
-//#ifdef CONFIG_LGE_FELICA_DCM
 #define FELICA_LED_SUPPORT
-//#endif
-#if defined(CONFIG_LGE_FELICA_ONLY)
-//#define FELICA_NFC_INTERFACE
-#else
 #define FELICA_NFC_INTERFACE
-#endif
+
 /* debug message */
+#define FEATURE_DEBUG_HIGH
+#define FEATURE_DEBUG_MED
 //#define FEATURE_DEBUG_LOW
+#define RXTX_LOG_ENABLE
 #define FELICA_DEBUG_MSG printk
-
-
-/* felica_pon */
-#define FELICA_PON_NAME    "felica_pon"
 
 /* felica */
 #define FELICA_NAME    "felica"
+
+/* felica_pon */
+#define FELICA_PON_NAME    "felica_pon"
 
 /* felica_cen */
 #define FELICA_CEN_NAME    "felica_cen"
@@ -104,15 +100,25 @@ typedef enum _e_snfc_i2c_status {
 /*
  *  EXTERNAL VARIABLE
  */
-//Must check each model's path in 'android/system/core/rootdir/init.rc'file
+/* Must check each model's path in 'android/system/core/rootdir/init.rc'file */
 #define FELICA_LD_LIBRARY_PATH "LD_LIBRARY_PATH=/vendor/lib:/system/lib"
-#define FELICA_BOOTCLASSPATH "BOOTCLASSPATH=/system/framework/core.jar:/system/framework/core-junit.jar:/system/framework/bouncycastle.jar:/system/framework/ext.jar:/system/framework/framework.jar:/system/framework/framework_ext.jar:/system/framework/framework2.jar:/system/framework/android.policy.jar:/system/framework/services.jar:/system/framework/apache-xml.jar:/system/framework/com.lge.core.jar"
+
 #define FELICA_PATH "PATH=/sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin"
 
-//Must check each model's VALUE from UART developer
+/* JB */
+//#define FELICA_BOOTCLASSPATH "BOOTCLASSPATH=/system/framework/core.jar:/system/framework/core-junit.jar:/system/framework/bouncycastle.jar:/system/framework/ext.jar:/system/framework/framework.jar:/system/framework/framework_ext.jar:/system/framework/framework2.jar:/system/framework/android.policy.jar:/system/framework/services.jar:/system/framework/apache-xml.jar:/system/framework/com.lge.core.jar"
+
+/* JB MR1 */
+#define FELICA_BOOTCLASSPATH "BOOTCLASSPATH=/system/framework/core.jar:/system/framework/core-junit.jar:/system/framework/bouncycastle.jar:/system/framework/ext.jar:/system/framework/framework.jar:/system/framework/framework2.jar:/system/framework/telephony-common.jar:/system/framework/mms-common.jar:/system/framework/android.policy.jar:/system/framework/services.jar:/system/framework/apache-xml.jar:/system/framework/telephony-msim.jar:/system/framework/com.lge.core.jar:/system/framework/qcmediaplayer.jar:/system/framework/WfdCommon.jar"
+
+
+/* Must check each model's VALUE from UART developer */
 #define FELICA_IC2_NAME "/dev/i2c-0"
 #define FELICA_UART_NAME "/dev/ttyHSL2"
 
+/*
+ *  DEFINE FUNCTIONS
+ */
 void lock_felica_wake_lock(void);
 void unlock_felica_wake_lock(void);
 void init_felica_wake_lock(void);

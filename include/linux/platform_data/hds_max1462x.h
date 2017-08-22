@@ -16,24 +16,25 @@
 #define __HDS_MAX1462X_H__
 
 struct max1462x_platform_data {
-	const char *switch_name;  /* switch device name */
-	const char *keypad_name;  /* keypad device name */
+    /* mandotary */
+    const char *switch_name;    /* switch device name */
+    const char *keypad_name;    /* keypad device name */
 
-	unsigned int key_code;	  /* key code for hook, volume up, volume down */
+    unsigned int key_code;      /* key code for hook[KEY_MEDIA(226)], volume up[KEY_VOLUMEUP(115)], volume down[KEY_VOLUMEDOWN(114)] */
 
-	unsigned int gpio_mode;	   /* MODE : high, low, high-z */
-	unsigned int gpio_swd;	   /* SWD : to detect 3 pole or 4 pole | to detect among hook, volum up or down key */
-	unsigned int gpio_det;	   /* DET : to detect jack inserted or not */
+    unsigned int gpio_mode;     /* MODE : high, low, high-z */
+    unsigned int gpio_det;      /* DET : to detect jack inserted or not */
+    unsigned int gpio_swd;      /* SWD : to detect 3 pole or 4 pole | to detect among hook, volum up or down key */
 
-       /* callback function which is initialized while probing */
-	void (*set_headset_mic_bias)(int enable);
-	void (*gpio_set_value_func)(unsigned gpio, int value);
-	int (*gpio_get_value_func)(unsigned gpio);
+    unsigned int latency_for_detection; /* latency for DETIN Debounce Time (in ms) */
+    unsigned int latency_for_key;       /* latency for SEND/END Debounce Time (in ms) */
 
-	unsigned int external_ldo_mic_bias;  /* External LDO control */
-	/* latency for pole (3 or 4)detection (in ms) */
-	unsigned int latency_for_detection;
-	unsigned int latency_for_key;
+    /* optional */
+    unsigned int adc_mpp_num;   /* PMIC adc mpp number to read adc level on MIC */
+    unsigned int adc_channel;   /* PMIC adc channel to read adc level on MIC */
+
+    unsigned int external_ldo_mic_bias;         /* GPIO for an external LDO control */
+    void (*set_headset_mic_bias)(int enable);   /* callback function for an external LDO control */
 };
 
 #endif /* __HDS_MAX1462X_H__ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -229,9 +229,18 @@ int pm8xxx_hsed_bias_control(enum pm8xxx_hsed_bias bias, bool enable);
 void pm8921_turn_on_19p2mhz_clk_ext(void);
 #endif
 
-/*LGE_CHANGE_S 2012-08-11 jungwoo.yun@lge.com */
+/*                                            */
 int pm8921_usb_pwr_enable(int enable);
-/*LGE_CHANGE_E 2012-08-11 jungwoo.yun@lge.com */
+/*                                            */
+
+/**
+ * pm8xxx_read_register - Read a PMIC register
+ * @addr: PMIC register address
+ * @value: Output parameter which gets the value of the register read.
+ *
+ * RETURNS: an appropriate -ERRNO error value on error, or zero for success.
+ */
+int pm8xxx_read_register(u16 addr, u8 *value);
 
 #else
 

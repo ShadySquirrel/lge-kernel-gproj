@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2012, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -10,10 +10,113 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/mfd/pm8xxx/pm8921-bms.h>
+#include <linux/mfd/pm8xxx/batterydata-lib.h>
+
 #ifdef CONFIG_LGE_PM
-/* LGE_S  2200mAh rbatt table from QCT */
-#if 1//new rbatt from QCT 2012-08-14
+#if defined(CONFIG_MACH_APQ8064_AWIFI) || defined(CONFIG_MACH_APQ8064_ALTEV)
+
+static struct single_row_lut fcc_temp = {
+	.x		= {-20, 0, 25, 40, 60},
+	.y		= {4635, 4639, 4636, 4625, 4586},
+	.cols	= 5
+};
+
+static struct single_row_lut fcc_sf = {
+	.x		= {0},
+	.y		= {100},
+	.cols	= 1
+};
+
+static struct sf_lut rbatt_sf = {
+	.rows		= 30,
+	.cols		= 5,
+	.row_entries		= {-20, 0, 25, 40, 60},
+	.percent	= {100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 16, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1},
+	.sf		= {
+				{1115, 209, 100, 91, 92},
+				{1115, 209, 100, 91, 92},
+				{1133, 216, 101, 92, 92},
+				{1178, 222, 103, 94, 94},
+				{1088, 240, 106, 95, 95},
+				{1106, 250, 110, 98, 96},
+				{1110, 248, 113, 100, 97},
+				{1121, 247, 120, 103, 99},
+				{1147, 229, 127, 109, 103},
+				{1186, 223, 105, 95, 94},
+				{1235, 226, 103, 94, 94},
+				{1290, 232, 106, 96, 95},
+				{1353, 241, 107, 97, 96},
+				{1432, 256, 108, 99, 97},
+				{1520, 280, 110, 96, 94},
+				{1610, 309, 111, 96, 94},
+				{1709, 345, 112, 97, 95},
+				{1788, 377, 115, 98, 94},
+				{1848, 414, 117, 99, 96},
+				{1842, 442, 121, 100, 96},
+				{1855, 459, 124, 102, 96},
+				{1894, 480, 126, 102, 98},
+				{1941, 505, 130, 102, 98},
+				{1997, 527, 130, 102, 97},
+				{2060, 544, 128, 102, 97},
+				{2140, 562, 131, 103, 98},
+				{2321, 593, 134, 104, 99},
+				{2769, 635, 141, 108, 101},
+				{3503, 693, 150, 115, 105},
+				{4852, 784, 176, 140, 123},
+	}
+};
+
+static struct pc_temp_ocv_lut pc_temp_ocv = {
+	.rows		= 31,
+	.cols		= 5,
+	.temp		= {-20, 0, 25, 40, 60},
+	.percent	= {100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 16, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0},
+	.ocv		= {
+				{4280, 4278, 4273, 4269, 4262},
+				{4187, 4209, 4210, 4208, 4203},
+				{4124, 4155, 4156, 4154, 4150},
+				{4078, 4104, 4105, 4104, 4100},
+				{3991, 4058, 4060, 4057, 4053},
+				{3950, 4007, 4013, 4012, 4010},
+				{3908, 3963, 3974, 3974, 3970},
+				{3871, 3922, 3939, 3939, 3935},
+				{3844, 3877, 3900, 3902, 3900},
+				{3826, 3844, 3852, 3852, 3851},
+				{3810, 3819, 3826, 3826, 3825},
+				{3795, 3800, 3807, 3806, 3806},
+				{3780, 3786, 3790, 3790, 3789},
+				{3764, 3776, 3776, 3776, 3775},
+				{3747, 3766, 3766, 3760, 3750},
+				{3728, 3750, 3753, 3743, 3729},
+				{3705, 3723, 3728, 3719, 3707},
+				{3682, 3698, 3695, 3687, 3671},
+				{3662, 3685, 3679, 3672, 3661},
+				{3647, 3678, 3675, 3669, 3658},
+				{3638, 3674, 3673, 3667, 3656},
+				{3626, 3670, 3671, 3664, 3653},
+				{3612, 3664, 3666, 3659, 3647},
+				{3595, 3651, 3655, 3645, 3629},
+				{3572, 3628, 3626, 3615, 3596},
+				{3543, 3591, 3583, 3572, 3552},
+				{3505, 3540, 3529, 3517, 3498},
+				{3451, 3474, 3460, 3449, 3430},
+				{3374, 3384, 3369, 3358, 3340},
+				{3252, 3250, 3238, 3226, 3212},
+				{3000, 3000, 3000, 3000, 3000}
+	}
+};
+
+struct bms_battery_data LGE_4600_PMH_data = {
+	.fcc				= 4600,
+	.fcc_temp_lut			= &fcc_temp,
+	.fcc_sf_lut				= &fcc_sf,
+	.pc_temp_ocv_lut		= &pc_temp_ocv,
+	.rbatt_sf_lut			= &rbatt_sf,
+	.default_rbatt_mohm	= 102
+};
+
+#elif 1
+
 static struct single_row_lut fcc_temp = {
 	   .x			 = {-20, 0, 25, 40, 60},
 	   .y			 = {2188, 2204, 2210, 2210, 2205},
@@ -107,7 +210,7 @@ static struct pc_temp_ocv_lut pc_temp_ocv = {
 		}
 };
 
-struct pm8921_bms_battery_data LGE_2200_PMH_data/*LGE_PMH_LGU+_L20_data*/ = {
+struct bms_battery_data LGE_2200_PMH_data/*                     */ = {
 		.fcc						= 2200,
 		.fcc_temp_lut		  		= &fcc_temp,
 		.fcc_sf_lut 				= &fcc_sf,
@@ -219,7 +322,7 @@ static struct sf_lut lge_2200_pc_sf = {
 	}
 };
 
-struct pm8921_bms_battery_data LGE_2200_PMH_data = {
+struct bms_battery_data LGE_2200_PMH_data = {
 	.fcc				= 2200,
 	.fcc_temp_lut		= &lge_2200_fcc_temp,
 	.fcc_sf_lut			= &lge_2200_fcc_sf,
@@ -229,9 +332,9 @@ struct pm8921_bms_battery_data LGE_2200_PMH_data = {
 	.default_rbatt_mohm	= 165,
 };
 #endif
-/* LGE_E  2200mAh rbatt table from QCT */
+/*                                     */
 
-/* LGE_S  2100mAh rbatt table from QCT */
+/*                                     */
 //receive from 2012_08_09
 static struct single_row_lut lge_2100_fcc_temp = {
 	.x		= {-20, 0, 25, 40, 60},
@@ -333,7 +436,7 @@ static struct sf_lut lge_2100_pc_sf = {
 				{100}
 	}
 };
-struct pm8921_bms_battery_data LGE_2100_PMH_data = {
+struct bms_battery_data LGE_2100_PMH_data = {
 	.fcc				  = 2100,
 	.fcc_temp_lut		  = &lge_2100_fcc_temp,
 	.fcc_sf_lut			  = &lge_2100_fcc_sf,
@@ -342,9 +445,9 @@ struct pm8921_bms_battery_data LGE_2100_PMH_data = {
 	.rbatt_sf_lut		  = &lge_2100_rbatt_sf,
 	.default_rbatt_mohm	  = 182, //206, //106,
 };
-/* LGE_E  2100mAh rbatt table from QCT */
+/*                                     */
 
-/* LGE_S  1900mAh rbatt table from QCT */
+/*                                     */
 static struct single_row_lut lge_1840_fcc_temp = {
 	.x		= {-20, 0, 25, 40, 65},
 	.y		= {1834, 1854, 1869, 1872, 1868},
@@ -448,7 +551,7 @@ static struct sf_lut lge_1840_pc_sf = {
 	}
 };
 
-struct pm8921_bms_battery_data lge_1840_data = {
+struct bms_battery_data lge_1840_data = {
 	.fcc				= 1840,
 	.fcc_temp_lut		= &lge_1840_fcc_temp,
 	.fcc_sf_lut			= &lge_1840_fcc_sf,
@@ -457,10 +560,9 @@ struct pm8921_bms_battery_data lge_1840_data = {
 	.rbatt_sf_lut		= &lge_1840_rbatt_sf,
 	.default_rbatt_mohm	= 111,
 };
-/* LGE_S  1900mAh rbatt table from QCT QCT*/
-#endif
+/*                                        */
 
-/* LGE_S  1900mAh table from LG-Chemistry*/
+/*                                       */
 static struct single_row_lut lge_1900_fcc_temp = {
 	.x	= {-20, 0, 25, 40, 65},
 	.y	= {1899, 1899, 1900, 1890, 1909},
@@ -533,7 +635,7 @@ static struct pc_temp_ocv_lut  lge_1900_pc_temp_ocv = {
 	},
 };
 
-/* LGE_S  On LG-Chemistry added  1900mAh rbatt table QCT*/
+/*                                                      */
 static struct sf_lut lge_1900_rbatt_sf = {
 	.rows		= 19,
 	.cols		= 5,
@@ -564,17 +666,117 @@ static struct sf_lut lge_1900_rbatt_sf = {
 				{1261, 324, 100, 68, 57},
 	}
 };
-/* LGE_E  On LG-Chemistry added  1900mAh rbatt table QCT*/
+/*                                                      */
 
-struct pm8921_bms_battery_data  lge_1900_data = {
+struct bms_battery_data  lge_1900_data = {
 	.fcc                = 1900,
 	.fcc_temp_lut       = &lge_1900_fcc_temp,
 	.fcc_sf_lut         = &lge_1900_fcc_sf,
 	.pc_temp_ocv_lut    = &lge_1900_pc_temp_ocv,
 	.pc_sf_lut          = &lge_1900_pc_sf,
-/* LGE_S  On LG-Chemistry added  1900mAh rbatt table QCT*/
+/*                                                      */
 	.rbatt_sf_lut       = &lge_1900_rbatt_sf,
 	.default_rbatt_mohm	= 200,
-/* LGE_E  On LG-Chemistry added  1900mAh rbatt table QCT*/
+/*                                                      */
 };
-/* LGE_S  1900mAh table from LG-Chemistry*/
+/*                                       */
+
+#else	//                     
+
+static struct single_row_lut fcc_temp = {
+	.x		= {-20, 0, 25, 40, 65},
+	.y		= {1492, 1492, 1493, 1483, 1502},
+	.cols	= 5
+};
+
+static struct pc_temp_ocv_lut pc_temp_ocv = {
+	.rows		= 29,
+	.cols		= 5,
+	.temp		= {-20, 0, 25, 40, 65},
+	.percent	= {100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40,
+					35, 30, 25, 20, 15, 10, 9, 8, 7, 6, 5,
+					4, 3, 2, 1, 0},
+	.ocv		= {
+				{4173, 4167, 4163, 4156, 4154},
+				{4104, 4107, 4108, 4102, 4104},
+				{4057, 4072, 4069, 4061, 4060},
+				{3973, 4009, 4019, 4016, 4020},
+				{3932, 3959, 3981, 3982, 3983},
+				{3899, 3928, 3954, 3950, 3950},
+				{3868, 3895, 3925, 3921, 3920},
+				{3837, 3866, 3898, 3894, 3892},
+				{3812, 3841, 3853, 3856, 3862},
+				{3794, 3818, 3825, 3823, 3822},
+				{3780, 3799, 3804, 3804, 3803},
+				{3768, 3787, 3790, 3788, 3788},
+				{3757, 3779, 3778, 3775, 3776},
+				{3747, 3772, 3771, 3766, 3765},
+				{3736, 3763, 3766, 3760, 3746},
+				{3725, 3749, 3756, 3747, 3729},
+				{3714, 3718, 3734, 3724, 3706},
+				{3701, 3703, 3696, 3689, 3668},
+				{3675, 3695, 3682, 3675, 3662},
+				{3670, 3691, 3680, 3673, 3661},
+				{3661, 3686, 3679, 3672, 3656},
+				{3649, 3680, 3676, 3669, 3641},
+				{3633, 3669, 3667, 3655, 3606},
+				{3610, 3647, 3640, 3620, 3560},
+				{3580, 3607, 3596, 3572, 3501},
+				{3533, 3548, 3537, 3512, 3425},
+				{3457, 3468, 3459, 3429, 3324},
+				{3328, 3348, 3340, 3297, 3172},
+				{3000, 3000, 3000, 3000, 3000}
+	}
+};
+
+static struct sf_lut rbatt_sf = {
+	.rows		= 29,
+	.cols		= 5,
+	/* row_entries are temperature */
+	.row_entries	= {-20, 0, 20, 40, 65},
+	.percent	= {100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40,
+					35, 30, 25, 20, 15, 10, 9, 8, 7, 6, 5,
+					4, 3, 2, 1, 0},
+	.sf		= {
+				{357, 187, 100, 91, 91},
+				{400, 208, 105, 94, 94},
+				{390, 204, 106, 95, 96},
+				{391, 201, 108, 98, 98},
+				{391, 202, 110, 98, 100},
+				{390, 200, 110, 99, 102},
+				{389, 200, 110, 99, 102},
+				{393, 202, 101, 93, 100},
+				{407, 205, 99, 89, 94},
+				{428, 208, 100, 91, 96},
+				{455, 212, 102, 92, 98},
+				{495, 220, 104, 93, 101},
+				{561, 232, 107, 95, 102},
+				{634, 245, 112, 98, 98},
+				{714, 258, 114, 98, 98},
+				{791, 266, 114, 97, 100},
+				{871, 289, 108, 95, 97},
+				{973, 340, 124, 108, 105},
+				{489, 241, 109, 96, 99},
+				{511, 246, 110, 96, 99},
+				{534, 252, 111, 95, 98},
+				{579, 263, 112, 96, 96},
+				{636, 276, 111, 95, 97},
+				{730, 294, 109, 96, 99},
+				{868, 328, 112, 98, 104},
+				{1089, 374, 119, 101, 115},
+				{1559, 457, 128, 105, 213},
+				{12886, 1026, 637, 422, 3269},
+				{170899, 127211, 98968, 88907, 77102},
+	}
+};
+#endif	//                     
+
+struct bms_battery_data palladium_1500_data = {
+	.fcc			= 1500,
+	.fcc_temp_lut		= &fcc_temp,
+	.pc_temp_ocv_lut	= &pc_temp_ocv,
+	.rbatt_sf_lut		= &rbatt_sf,
+	.default_rbatt_mohm	= 236,
+	.rbatt_capacitive_mohm	= 50,
+};
+

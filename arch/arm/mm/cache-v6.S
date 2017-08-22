@@ -12,6 +12,7 @@
 #include <linux/linkage.h>
 #include <linux/init.h>
 #include <asm/assembler.h>
+#include <asm/errno.h>
 #include <asm/unwind.h>
 
 #include "proc-macros.S"
@@ -20,7 +21,6 @@
 #define CACHE_LINE_SIZE		32
 #define D_CACHE_LINE_SIZE	32
 #define BTB_FLUSH_SIZE		8
-
 
 /*
  *	v6_flush_icache_all()

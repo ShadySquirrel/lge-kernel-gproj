@@ -44,7 +44,9 @@ int felica_i2c_open (void)
   fd = sys_open(FELICA_IC2_NAME, O_RDWR|O_NONBLOCK, 0);
   if (fd < 0)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_I2C] ERROR - felica_i2c_open : %d \n", fd);
+	#endif
     return fd;
   }
 
@@ -71,7 +73,9 @@ int felica_i2c_release (void)
   rc = sys_close(fd);
   if (rc < 0)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_I2C] ERROR - felica_i2c_release : %d \n", rc);
+	#endif
     return rc;
   }
   set_fs(old_fs);
@@ -92,12 +96,14 @@ int felica_i2c_set_slave_address (unsigned char slave_address)
 
   if (rc < 0)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_I2C] ERROR - sys_ioctl : %d \n",rc);
+	#endif
     return rc;
   }
 
   #ifdef FEATURE_DEBUG_LOW
-  FELICA_DEBUG_MSG("[FELICA_I2C] slave address : 0x%02x\n",slave_address>>1);
+  FELICA_DEBUG_MSG("[FELICA_I2C] slave address : 0x%02x \n",slave_address>>1);
   #endif
 
   return 0;
@@ -128,7 +134,9 @@ int felica_i2c_read(unsigned char reg, unsigned char *buf, size_t count)
 //  if(I2C_STATUS_NO_USE != get_felica_i2c_status())
   if(I2C_STATUS_FOR_NFC == get_felica_i2c_status())
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_I2C] ERROR - other device(NFC) use i2c abnormally \n");
+	#endif
     return rc;
   }
 
@@ -140,7 +148,9 @@ int felica_i2c_read(unsigned char reg, unsigned char *buf, size_t count)
   rc = felica_i2c_open();
   if (rc)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_I2C] ERROR - felica_i2c_open : %d \n",rc);
+	#endif
     goto ERROR;
   }
 
@@ -148,7 +158,9 @@ int felica_i2c_read(unsigned char reg, unsigned char *buf, size_t count)
   rc = felica_i2c_set_slave_address(I2C_FELICA_SLAVE_ADDRESS);
   if (rc)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_I2C] ERROR - felica_i2c_set_slave_address : %d \n",rc);
+	#endif
     goto ERROR;
   }
 
@@ -156,20 +168,24 @@ int felica_i2c_read(unsigned char reg, unsigned char *buf, size_t count)
   rc = sys_write(fd, &reg, 1);
   if (rc < 0)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_I2C] ERROR - sys_write : %d \n",rc);
+	#endif
     goto ERROR;
   }
 
   /* read register data */
   rc = sys_read(fd, buf, count);
 
-  #ifdef FEATURE_DEBUG_LOW
+  #ifdef FEATURE_DEBUG_MED
   FELICA_DEBUG_MSG("[FELICA_I2C] read data : 0x%02x \n",*buf);
   #endif
 
   if (rc < 0)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_I2C] ERROR - sys_read : %d \n",rc);
+	#endif
     goto ERROR;
   }
 
@@ -177,7 +193,9 @@ int felica_i2c_read(unsigned char reg, unsigned char *buf, size_t count)
   rc = felica_i2c_release();
   if (rc)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_I2C] ERROR - felica_i2c_release : %d \n",rc);
+	#endif
     goto ERROR;
   }
 
@@ -220,7 +238,9 @@ int felica_i2c_write(unsigned char reg, unsigned char *buf, size_t count)
 //  if(I2C_STATUS_NO_USE != get_felica_i2c_status())
   if(I2C_STATUS_FOR_NFC == get_felica_i2c_status())
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_I2C] ERROR - other device(NFC) use i2c abnormally \n");
+	#endif
     return rc;
   }
 
@@ -232,7 +252,9 @@ int felica_i2c_write(unsigned char reg, unsigned char *buf, size_t count)
   rc = felica_i2c_open();
   if (rc)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_I2C] ERROR - felica_i2c_open : %d \n",rc);
+	#endif
     goto ERROR;
   }
 
@@ -240,7 +262,9 @@ int felica_i2c_write(unsigned char reg, unsigned char *buf, size_t count)
   rc = felica_i2c_set_slave_address(I2C_FELICA_SLAVE_ADDRESS);
   if (rc)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_I2C] ERROR - felica_i2c_set_slave_address : %d \n",rc);
+	#endif
     goto ERROR;
   }
 
@@ -249,7 +273,7 @@ int felica_i2c_write(unsigned char reg, unsigned char *buf, size_t count)
   write_buf[0] = reg;
   write_buf[1] = *buf;
 
-  #ifdef FEATURE_DEBUG_LOW
+  #ifdef FEATURE_DEBUG_MED
   FELICA_DEBUG_MSG("[FELICA_I2C] write_buf[0][1] : 0x%02x 0x%02x \n",write_buf[0],write_buf[1]);
   #endif
 
@@ -257,7 +281,9 @@ int felica_i2c_write(unsigned char reg, unsigned char *buf, size_t count)
   rc = sys_write(fd, write_buf, 2);
   if (rc < 0)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_I2C] ERROR - sys_write : %d \n",rc);
+	#endif
     goto ERROR;
   }
 
@@ -265,7 +291,9 @@ int felica_i2c_write(unsigned char reg, unsigned char *buf, size_t count)
   rc = felica_i2c_release();
   if (rc)
   {
+    #ifdef FEATURE_DEBUG_HIGH
     FELICA_DEBUG_MSG("[FELICA_I2C] ERROR - felica_i2c_release : %d \n",rc);
+	#endif
     goto ERROR;
   }
 
