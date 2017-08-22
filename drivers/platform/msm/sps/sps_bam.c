@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2012, Code Aurora Forum. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -24,7 +24,8 @@
 #include "spsi.h"
 
 /* All BAM global IRQ sources */
-#define BAM_IRQ_ALL (BAM_DEV_IRQ_HRESP_ERROR | BAM_DEV_IRQ_ERROR)
+#define BAM_IRQ_ALL (BAM_DEV_IRQ_HRESP_ERROR | BAM_DEV_IRQ_ERROR |   \
+	BAM_DEV_IRQ_TIMER)
 
 /* BAM device state flags */
 #define BAM_STATE_INIT     (1UL << 1)
@@ -145,7 +146,7 @@ static irqreturn_t bam_isr(int irq, void *ctxt)
 				BAM_ID(dev), source, mask);
 
 		if ((source & (1UL << 31)) && (dev->props.callback)) {
-			SPS_INFO("sps:bam_isr:bam=0x%x;callback for case %d.",
+			SPS_DBG1("sps:bam_isr:bam=0x%x;callback for case %d.\n",
 				BAM_ID(dev), cb_case);
 			dev->props.callback(cb_case, dev->props.user);
 		}
@@ -426,6 +427,10 @@ int sps_bam_disable(struct sps_bam *dev)
 	if ((dev->props.manage & SPS_BAM_MGR_DEVICE_REMOTE)) {
 		/* No, so just mark it disabled */
 		dev->state &= ~BAM_STATE_ENABLED;
+		if ((dev->state & BAM_STATE_IRQ) && (dev->props.irq > 0)) {
+			free_irq(dev->props.irq, dev);
+			dev->state &= ~BAM_STATE_IRQ;
+		}
 		return 0;
 	}
 
@@ -1004,8 +1009,6 @@ int sps_bam_pipe_set_params(struct sps_bam *dev, u32 pipe_index, u32 options)
 	wake_up_is_one_shot = ((options & SPS_O_WAKEUP_IS_ONESHOT));
 	no_queue = ((options & SPS_O_NO_Q));
 	ack_xfers = ((options & SPS_O_ACK_TRANSFERS));
-
-	pipe->hybrid = options & SPS_O_HYBRID;
 
 	/* Create interrupt source mask */
 	mask = 0;
@@ -1775,7 +1778,7 @@ int sps_bam_pipe_get_iovec(struct sps_bam *dev, u32 pipe_index,
 	}
 
 	/* If pipe is polled and queue is enabled, perform polling operation */
-	if ((pipe->polled || pipe->hybrid) && !pipe->sys.no_queue)
+	if (pipe->polled && !pipe->sys.no_queue)
 		pipe_handler_eot(dev, pipe);
 
 	/* Is there a completed descriptor? */
@@ -1962,7 +1965,7 @@ int sps_bam_pipe_timer_ctrl(struct sps_bam *dev,
 			BAM_PIPE_TIMER_ONESHOT :
 			BAM_PIPE_TIMER_PERIODIC;
 		bam_pipe_timer_config(dev->base, pipe_index, mode,
-				    timer_ctrl->timeout_msec * 10);
+				    timer_ctrl->timeout_msec * 8);
 		break;
 	case SPS_TIMER_OP_RESET:
 		bam_pipe_timer_reset(dev->base, pipe_index);

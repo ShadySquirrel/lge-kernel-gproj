@@ -256,8 +256,6 @@ phys_addr_t msm_subsystem_check_iova_mapping(int subsys_id, unsigned long iova)
 
 	subsys_domain = msm_get_iommu_domain(msm_subsystem_get_domain_no
 								(subsys_id));
-	if (!subsys_domain)
-		return -EINVAL;
 
 	return iommu_iova_to_phys(subsys_domain, iova);
 }
@@ -412,8 +410,8 @@ struct msm_mapped_buffer *msm_subsystem_map_buffer(unsigned long phys,
 
 			if (flags & MSM_SUBSYSTEM_MAP_IOMMU_2X)
 				msm_iommu_map_extra
-					(d, temp_va, phys, length, SZ_4K,
-					IOMMU_READ);
+					(d, temp_va, length, SZ_4K,
+					(IOMMU_READ | IOMMU_WRITE));
 		}
 
 	}
@@ -514,9 +512,6 @@ int msm_subsystem_unmap_buffer(struct msm_mapped_buffer *buf)
 				subsys_domain = msm_get_iommu_domain(
 						msm_subsystem_get_domain_no(
 						node->subsystems[i]));
-
-				if (!subsys_domain)
-					continue;
 
 				domain_no = msm_subsystem_get_domain_no(
 							node->subsystems[i]);

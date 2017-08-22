@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -32,6 +32,7 @@ enum bam_irq {
 	BAM_DEV_IRQ_RDY_TO_SLEEP = 0x00000001,
 	BAM_DEV_IRQ_HRESP_ERROR = 0x00000002,
 	BAM_DEV_IRQ_ERROR = 0x00000004,
+	BAM_DEV_IRQ_TIMER = 0x00000010,
 };
 
 /* Pipe interrupt mask */
@@ -170,7 +171,6 @@ struct sps_pipe {
 	u32 pipe_index_mask;
 	u32 irq_mask;
 	int polled;
-	int hybrid;
 	u32 irq_gen_addr;
 	enum sps_mode mode;
 	u32 num_descs; /* Size (number of elements) of descriptor FIFO */
