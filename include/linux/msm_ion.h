@@ -1,6 +1,7 @@
 /*
+ * include/linux/ion.h
  *
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013, Code Aurora Forum. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -18,9 +19,11 @@
 
 #include <linux/ion.h>
 
-#define ION_HEAP_TYPE_MSM_START (ION_HEAP_TYPE_CUSTOM + 1)
-#define ION_HEAP_TYPE_IOMMU	(ION_HEAP_TYPE_MSM_START)
-#define ION_HEAP_TYPE_CP	(ION_HEAP_TYPE_IOMMU + 1)
+enum msm_ion_heap_types {
+	ION_HEAP_TYPE_MSM_START = ION_HEAP_TYPE_CUSTOM + 1,
+	ION_HEAP_TYPE_IOMMU = ION_HEAP_TYPE_MSM_START,
+	ION_HEAP_TYPE_CP,
+};
 
 /**
  * These are the only ids that should be used for Ion heap ids.
@@ -70,14 +73,20 @@ enum cp_mem_usage {
 /**
  * Flag to use when allocating to indicate that a heap is secure.
  */
-#define ION_SECURE (1 << ION_HEAP_ID_RESERVED)
+#define ION_FLAG_SECURE (1 << ION_HEAP_ID_RESERVED)
 
 /**
  * Flag for clients to force contiguous memort allocation
  *
  * Use of this flag is carefully monitored!
  */
-#define ION_FORCE_CONTIGUOUS (1 << 30)
+#define ION_FLAG_FORCE_CONTIGUOUS (1 << 30)
+
+/**
+* Deprecated! Please use the corresponding ION_FLAG_*
+*/
+#define ION_SECURE ION_FLAG_SECURE
+#define ION_FORCE_CONTIGUOUS ION_FLAG_FORCE_CONTIGUOUS
 
 /**
  * Macro should be used with ion_heap_ids defined above.
